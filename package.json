@@ -1,0 +1,29 @@
+{
+  "name": "skincancercheckmobile",
+  "license": "0BSD",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-navigation/native": "^7.1.10",
+    "@react-navigation/native-stack": "^7.3.14",
+    "@supabase/supabase-js": "^2.50.0",
+    "expo": "^53.0.11",
+    "expo-camera": "^16.1.7",
+    "expo-constants": "^17.1.6",
+    "expo-image-picker": "^16.1.4",
+    "expo-media-library": "^17.1.7",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-native": "0.79.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}
