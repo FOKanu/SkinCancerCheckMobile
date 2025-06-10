@@ -42,6 +42,7 @@ yarn install
 ```
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+SCORING_API_URL=your_scoring_api_url  # URL for the skin lesion scoring API
 ```
 
 4. Start the development server:
