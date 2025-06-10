@@ -45,7 +45,13 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SCORING_API_URL=your_scoring_api_url  # URL for the skin lesion scoring API
 ```
 
-4. Start the development server:
+4. Create your `app.json` file:
+```bash
+cp app.template.json app.json
+```
+Then update the `extra` section in `app.json` with your Supabase credentials.
+
+5. Start the development server:
 ```bash
 npm start
 # or

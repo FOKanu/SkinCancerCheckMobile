@@ -26,8 +26,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "supabaseUrl": "SUPABASE_URL",
-      "supabaseAnonKey": "SUPABASE_ANON_KEY"
+      "supabaseUrl": "your-supabase-url",
+      "supabaseAnonKey": "your-supabase-anon-key"
     }
   }
-}
+} 
