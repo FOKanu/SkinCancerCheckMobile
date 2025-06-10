@@ -90,6 +90,7 @@ yarn-error.log
 .env.*
 !.env.example
 app.json
+app.config.js
 
 # IDE
 .vscode/

@@ -31,25 +31,30 @@ git clone https://github.com/yourusername/SkinCheckMobile.git
 cd SkinCheckMobile
 ```
 
-2. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-```
-
-3. Create a `.env` file in the root directory and add your Supabase credentials:
+2. Create a `.env` file in the root directory and add your Supabase credentials:
 ```
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SCORING_API_URL=your_scoring_api_url  # URL for the skin lesion scoring API
 ```
 
-4. Create your `app.json` file:
+3. Install dependencies:
 ```bash
-cp app.template.json app.json
+npm install
 ```
-Then update the `extra` section in `app.json` with your Supabase credentials.
+
+4. Create your `app.config.js` file:
+```bash
+cp app.template.json app.config.js
+```
+Then update the `extra` section in `app.config.js` with your environment variables:
+```javascript
+extra: {
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  scoringApiUrl: process.env.SCORING_API_URL
+}
+```
 
 5. Start the development server:
 ```bash

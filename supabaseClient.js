@@ -5,6 +5,9 @@ import Constants from 'expo-constants';
 const supabaseUrl = Constants.expoConfig.extra.supabaseUrl;
 const supabaseAnonKey = Constants.expoConfig.extra.supabaseAnonKey;
 
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Anon Key:', supabaseAnonKey ? '***' : undefined);
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase credentials. Please check your environment variables.');
 }

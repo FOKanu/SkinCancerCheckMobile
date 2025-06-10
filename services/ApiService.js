@@ -1,6 +1,9 @@
-const API_BASE_URL = process.env.SCORING_API_URL || 'http://localhost:4000';
+import Constants from 'expo-constants';
+
+const API_BASE_URL = Constants.expoConfig.extra.scoringApiUrl || 'http://localhost:4000';
 
 export async function predictSkinLesion(imageUri) {
+  console.log('Using API URL:', API_BASE_URL); // Debug log
   const formData = new FormData();
   formData.append('file', {
     uri: imageUri,
