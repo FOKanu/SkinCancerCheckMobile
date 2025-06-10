@@ -26,8 +26,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "supabaseUrl": "https://fpkbrdyzkarkfsluxksg.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwa2JyZHl6a2Fya2ZzbHV4a3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTkzMzcsImV4cCI6MjA2NDY5NTMzN30.FdRFstLqsuwJAXHtIc3QDHTsnMkRfAD2_1uxc8Wx5Og"
+      "supabaseUrl": "SupabaseUrl",
+      "supabaseAnonKey": "SupabaseAnonkey"
     }
   }
 }
