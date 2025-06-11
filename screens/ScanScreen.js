@@ -8,26 +8,38 @@ export default function ScanScreen({ navigation }) {
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const logImageDimensions = (uri) => {
+    Image.getSize(uri, (width, height) => {
+      console.log('Cropped image dimensions:', { width, height });
+    }, (error) => {
+      console.error('Error getting image dimensions:', error);
+    });
+  };
+
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [1, 1],
       quality: 1,
+      outputSize: { width: 224, height: 224 }
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImageUri(result.assets[0].uri);
+      logImageDimensions(result.assets[0].uri);
     }
   };
 
   const takePhoto = async () => {
     let result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [1, 1],
       quality: 1,
+      outputSize: { width: 224, height: 224 }
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImageUri(result.assets[0].uri);
+      logImageDimensions(result.assets[0].uri);
     }
   };
 

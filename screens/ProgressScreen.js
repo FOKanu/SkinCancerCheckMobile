@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPredictionHistory } from '../services/PredictionService';
+import { getCurrentUser } from '../services/AuthService';
 
 export default function ProgressScreen() {
   const [stats, setStats] = useState({
@@ -13,7 +14,8 @@ export default function ProgressScreen() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const history = await getPredictionHistory();
+      const currentUser = getCurrentUser();
+      const history = await getPredictionHistory(currentUser?.id);
       const totalScans = history.length;
       const benignCount = history.filter(item => item.prediction === 'benign').length;
       const malignantCount = history.filter(item => item.prediction === 'malignant').length;
@@ -57,25 +59,25 @@ export default function ProgressScreen() {
           {renderStatCard(
             'Total Scans',
             stats.totalScans,
-            'scan',
+            'analytics',
             '#3498db'
           )}
           {renderStatCard(
             'Benign Results',
             stats.benignCount,
-            'checkmark-circle',
+            'happy',
             '#2ecc71'
           )}
           {renderStatCard(
             'Malignant Results',
             stats.malignantCount,
-            'alert-circle',
+            'sad',
             '#e74c3c'
           )}
           {renderStatCard(
             'Avg. Confidence',
-            `${(stats.averageConfidence * 100).toFixed(1)}%`,
-            'trending-up',
+            `${(stats.averageConfidence * 100).toFixed(2)}%`,
+            'ribbon',
             '#f1c40f'
           )}
         </View>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, FlatList, Image, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getPredictionHistory } from '../services/PredictionService';
+import { getCurrentUser } from '../services/AuthService';
 
 export default function HistoryScreen({ navigation }) {
   const [history, setHistory] = useState([]);
@@ -10,7 +11,8 @@ export default function HistoryScreen({ navigation }) {
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true);
-      const data = await getPredictionHistory();
+      const currentUser = getCurrentUser();
+      const data = await getPredictionHistory(currentUser?.id);
       setHistory(data);
       setLoading(false);
     };
@@ -79,7 +81,7 @@ export default function HistoryScreen({ navigation }) {
               </View>
               <View style={styles.detailsContainer}>
                 <Text style={styles.confidence}>Confidence: {(item.confidence * 100).toFixed(2)}%</Text>
-                <Text style={styles.date}>{new Date(item.created_at).toLocaleString()}</Text>
+                <Text style={styles.date}>{new Date(item.scanned_at).toLocaleString()}</Text>
               </View>
             </View>
           </TouchableOpacity>

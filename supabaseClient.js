@@ -1,21 +1,53 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+import { ensureMockUserExists } from './services/AuthService';
 
 // Initialize the Supabase client
 const supabaseUrl = Constants.expoConfig.extra.supabaseUrl;
 const supabaseAnonKey = Constants.expoConfig.extra.supabaseAnonKey;
 
+console.log('Initializing Supabase client with:');
 console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Anon Key:', supabaseAnonKey ? '***' : undefined);
+console.log('Supabase Anon Key exists:', !!supabaseAnonKey);
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase credentials. Please check your environment variables.');
+  console.error('Missing Supabase credentials:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey
+  });
+  throw new Error('Missing Supabase credentials. Please check your environment variables.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let supabase;
+try {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('Supabase client initialized successfully');
 
-// Optional: Add error handling and logging
+  // Ensure the mock user exists in the users table
+  ensureMockUserExists();
+
+} catch (error) {
+  console.error('Error initializing Supabase client:', error);
+  throw error;
+}
+
+// Add error handling and logging
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase auth event:', event);
-  console.log('Session:', session);
+  console.log('Session:', session ? 'Active' : 'None');
 });
+
+// Test the connection
+supabase.from('scans').select('count').limit(1)
+  .then(({ data, error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection test successful');
+    }
+  })
+  .catch(error => {
+    console.error('Supabase connection test error:', error);
+  });
+
+export { supabase };

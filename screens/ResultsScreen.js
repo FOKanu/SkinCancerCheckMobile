@@ -1,30 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { savePredictionToSupabase } from '../services/PredictionService';
+import { savePredictionToSupabase, createSpot } from '../services/PredictionService';
+import { getCurrentUser } from '../services/AuthService';
 
 export default function ResultsScreen({ route, navigation }) {
   const { result, imageUri } = route.params || {};
-  const [saving, setSaving] = useState(true);
-  const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showOptions, setShowOptions] = useState(true);
+
+  const handleSaveToNewSpot = async () => {
+    setIsSaving(true);
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser || !currentUser.id) {
+        console.error("User not logged in. Cannot save prediction.");
+        Alert.alert('Error', 'Please log in to save your prediction history.');
+        return;
+      }
+      const spot = await createSpot(currentUser.id);
+      console.log('Spot created:', spot);
+      if (spot && spot.id) {
+        await savePredictionToSupabase(result, imageUri, spot.id);
+        setSaveSuccess(true);
+        setShowOptions(false);
+      } else {
+        console.error("Failed to create a new spot.", spot);
+        Alert.alert('Error', 'Failed to save prediction due to spot creation issue.');
+      }
+    } catch (error) {
+      console.error('Failed to save prediction:', error);
+      Alert.alert('Error', 'Failed to save prediction');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLinkToExistingSpot = () => {
+    navigation.navigate('SelectSpot', { result, imageUri });
+  };
 
   useEffect(() => {
-    const autoSave = async () => {
-      if (result && imageUri) {
+    if (route.params?.selectedSpotId) {
+      const saveToSelectedSpot = async () => {
+        setIsSaving(true);
         try {
-          await savePredictionToSupabase(result, imageUri);
-          setSaved(true);
+          await savePredictionToSupabase(result, imageUri, route.params.selectedSpotId);
+          setSaveSuccess(true);
+          setShowOptions(false);
         } catch (error) {
-          Alert.alert('Error', 'Failed to save prediction');
+          console.error('Failed to save prediction to existing spot:', error);
+          Alert.alert('Error', 'Failed to save prediction to existing spot.');
         } finally {
-          setSaving(false);
+          setIsSaving(false);
+          navigation.setParams({ selectedSpotId: undefined });
         }
-      } else {
-        setSaving(false);
-      }
-    };
-    autoSave();
-  }, [result, imageUri]);
+      };
+      saveToSelectedSpot();
+    }
+  }, [route.params?.selectedSpotId]);
 
   if (!result) {
     return (
@@ -51,8 +86,36 @@ export default function ResultsScreen({ route, navigation }) {
           <Text style={styles.probability}>Benign: {(result.probabilities.benign * 100).toFixed(2)}%</Text>
           <Text style={styles.probability}>Malignant: {(result.probabilities.malignant * 100).toFixed(2)}%</Text>
         </View>
-        {saving && <Text style={styles.savingText}>Saving to history...</Text>}
-        {saved && <Text style={styles.savedText}>Saved to history!</Text>}
+
+        {showOptions ? (
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, isSaving && styles.actionButtonDisabled]}
+              onPress={handleSaveToNewSpot}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.actionButtonText}>Save to New Spot</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, isSaving && styles.actionButtonDisabled]}
+              onPress={handleLinkToExistingSpot}
+              disabled={isSaving}
+            >
+              <Text style={styles.actionButtonText}>Link to Existing Spot</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          saveSuccess ? (
+            <Text style={styles.successMessage}>Prediction saved successfully!</Text>
+          ) : (
+            <Text style={styles.errorMessage}>Failed to save prediction.</Text>
+          )
+        )}
+
       </View>
     </SafeAreaView>
   );
@@ -70,6 +133,38 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50', marginBottom: 12 },
   confidence: { fontSize: 16, color: '#2c3e50', marginBottom: 8 },
   probability: { fontSize: 14, color: '#7f8c8d', marginBottom: 4 },
-  savingText: { color: '#3498db', fontSize: 16, marginTop: 10 },
-  savedText: { color: '#2ecc71', fontSize: 16, marginTop: 10 },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20,
+  },
+  actionButton: {
+    backgroundColor: '#3498db',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  successMessage: {
+    color: '#2ecc71',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  errorMessage: {
+    color: '#e74c3c',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
 });
