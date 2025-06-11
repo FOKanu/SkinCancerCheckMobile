@@ -17,7 +17,7 @@ export default function TutorialModal({ visible, onClose }) {
 
   const steps = [
     {
-      title: 'Welcome to Skin Cancer Check',
+      title: 'Welcome to Skin Check AI',
       content: 'This app helps you monitor your skin health using AI-powered analysis. Let\'s go through some important information.',
       icon: 'medkit',
     },

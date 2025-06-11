@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Alert } from 'react-native';
 import ScanScreen from './screens/ScanScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import HistoryScreen from './screens/HistoryScreen';
@@ -54,18 +55,38 @@ function HomeScreen({ navigation }) {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
+          {/* Alert Button */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Scan')}
+            onPress={() => {
+              Alert.alert('Alert', 'This is your alert action!');
+              // Or navigation.navigate('Alert');
+            }}
           >
-            <Ionicons name="camera" size={24} color="#3498db" />
-            <Text style={styles.actionText}>New Scan</Text>
+            <Ionicons name="alert-circle" size={24} color="#e74c3c" />
+            <Text style={styles.actionText}>Alert</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="images" size={24} color="#3498db" />
-            <Text style={styles.actionText}>Gallery</Text>
+
+          {/* AI Powered Tips Button */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              Alert.alert('AI Powered Tips', 'Here are your AI-powered health tips!');
+              // Or navigation.navigate('AITips');
+            }}
+          >
+            <Ionicons name="bulb" size={24} color="#f1c40f" />
+            <Text style={styles.actionText}>AI Tips</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+
+          {/* Appointment Button */}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              Alert.alert('Appointment', 'Here you can schedule an appointment!');
+              // Or navigation.navigate('Appointment');
+            }}
+          >
             <Ionicons name="calendar" size={24} color="#3498db" />
             <Text style={styles.actionText}>Schedule</Text>
           </TouchableOpacity>
