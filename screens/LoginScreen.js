@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { signIn } from '../services/AuthService';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,7 @@ export default function LoginScreen() {
     try {
       const { user } = await signIn(email, password);
       console.log('Login successful with user:', user);
+      navigation.replace('Tutorial');
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'An error occurred during login');

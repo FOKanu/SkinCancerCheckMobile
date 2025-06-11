@@ -11,7 +11,7 @@ import HistoryScreen from './screens/HistoryScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import EducationScreen from './screens/EducationScreen';
 import LoginScreen from './screens/LoginScreen';
-import TutorialModal from './components/TutorialModal';
+import TutorialScreen from './screens/TutorialScreen';
 import { getCurrentUser, subscribeToAuthState } from './services/AuthService';
 
 const Stack = createNativeStackNavigator();
@@ -187,24 +187,15 @@ export default function App() {
           headerShown: false,
         }}
       >
-        {!isAuthenticated ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
-        ) : (
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Scan" component={ScanScreen} />
-            <Stack.Screen name="Results" component={ResultsScreen} />
-            <Stack.Screen name="History" component={HistoryScreen} />
-            <Stack.Screen name="Progress" component={ProgressScreen} />
-            <Stack.Screen name="Education" component={EducationScreen} />
-          </>
-        )}
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Tutorial" component={TutorialScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Scan" component={ScanScreen} />
+        <Stack.Screen name="Results" component={ResultsScreen} />
+        <Stack.Screen name="History" component={HistoryScreen} />
+        <Stack.Screen name="Progress" component={ProgressScreen} />
+        <Stack.Screen name="Education" component={EducationScreen} />
       </Stack.Navigator>
-
-      <TutorialModal
-        visible={showTutorial}
-        onClose={handleTutorialClose}
-      />
     </NavigationContainer>
   );
 }
