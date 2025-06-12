@@ -63,13 +63,13 @@ export default function ProgressScreen() {
             '#3498db'
           )}
           {renderStatCard(
-            'Benign Results',
+            'Low Risk Results',
             stats.benignCount,
             'happy',
             '#2ecc71'
           )}
           {renderStatCard(
-            'Malignant Results',
+            'High Risk Results',
             stats.malignantCount,
             'sad',
             '#e74c3c'

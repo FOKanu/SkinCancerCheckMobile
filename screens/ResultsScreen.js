@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, Alert, A
 import { Ionicons } from '@expo/vector-icons';
 import { savePredictionToSupabase, createSpot } from '../services/PredictionService';
 import { getCurrentUser } from '../services/AuthService';
+import { getDisplayLabel } from '../services/ApiService';
 
 export default function ResultsScreen({ route, navigation }) {
   const { result, imageUri } = route.params || {};
@@ -81,10 +82,10 @@ export default function ResultsScreen({ route, navigation }) {
       <View style={styles.content}>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.preview} />}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Prediction: <Text style={{ color: result.prediction === 'malignant' ? '#e74c3c' : '#2ecc71' }}>{result.prediction.toUpperCase()}</Text></Text>
+          <Text style={styles.cardTitle}>Prediction: <Text style={{ color: getDisplayLabel(result.prediction) === 'High Risk' ? '#e74c3c' : '#2ecc71' }}>{getDisplayLabel(result.prediction)}</Text></Text>
           <Text style={styles.confidence}>Confidence: {(result.confidence * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>Benign: {(result.probabilities.benign * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>Malignant: {(result.probabilities.malignant * 100).toFixed(2)}%</Text>
+          <Text style={styles.probability}>Low Risk: {(result.probabilities.benign * 100).toFixed(2)}%</Text>
+          <Text style={styles.probability}>High Risk: {(result.probabilities.malignant * 100).toFixed(2)}%</Text>
         </View>
 
         {showOptions ? (

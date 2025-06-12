@@ -93,6 +93,7 @@ export async function savePredictionToSupabase(result, imageUri, spotId) {
 export async function getPredictionHistory(userId = null) {
   // If using placeholder, return dummy data
   if (supabase.__isPlaceholder) {
+    // NOTE: 'benign' and 'malignant' are mapped to 'Low Risk' and 'High Risk' in the UI using getDisplayLabel
     return [
       {
         id: 1,

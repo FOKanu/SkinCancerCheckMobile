@@ -3,6 +3,7 @@ import { View, Text, SafeAreaView, FlatList, Image, ActivityIndicator, StyleShee
 import { Ionicons } from '@expo/vector-icons';
 import { getPredictionHistory } from '../services/PredictionService';
 import { getCurrentUser } from '../services/AuthService';
+import { getDisplayLabel } from '../services/ApiService';
 
 export default function HistoryScreen({ navigation }) {
   const [history, setHistory] = useState([]);
@@ -74,9 +75,9 @@ export default function HistoryScreen({ navigation }) {
                 <Text style={styles.predictionLabel}>Prediction:</Text>
                 <Text style={[
                   styles.prediction,
-                  { color: item.prediction === 'malignant' ? '#e74c3c' : '#2ecc71' }
+                  { color: getDisplayLabel(item.prediction) === 'High Risk' ? '#e74c3c' : '#2ecc71' }
                 ]}>
-                  {item.prediction?.toUpperCase()}
+                  {getDisplayLabel(item.prediction)}
                 </Text>
               </View>
               <View style={styles.detailsContainer}>
