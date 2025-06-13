@@ -146,6 +146,7 @@ export async function predictSkinLesion(imageUri) {
 }
 
 export function getDisplayLabel(prediction) {
+  if (!prediction) return 'Unknown';
   if (prediction === 'benign') return 'Low Risk';
   if (prediction === 'malignant') return 'High Risk';
   return prediction;
