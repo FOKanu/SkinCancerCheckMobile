@@ -70,6 +70,11 @@ export default function ResultsScreen({ route, navigation }) {
     );
   }
 
+  const predictionLabel = getDisplayLabel(result.prediction);
+  const confidence = result.confidence ? (result.confidence * 100).toFixed(2) : '0.00';
+  const benignProbability = result.probabilities?.benign ? (result.probabilities.benign * 100).toFixed(2) : '0.00';
+  const malignantProbability = result.probabilities?.malignant ? (result.probabilities.malignant * 100).toFixed(2) : '0.00';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -82,10 +87,14 @@ export default function ResultsScreen({ route, navigation }) {
       <View style={styles.content}>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.preview} />}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Prediction: <Text style={{ color: getDisplayLabel(result.prediction) === 'High Risk' ? '#e74c3c' : '#2ecc71' }}>{getDisplayLabel(result.prediction)}</Text></Text>
-          <Text style={styles.confidence}>Confidence: {(result.confidence * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>Low Risk: {(result.probabilities.benign * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>High Risk: {(result.probabilities.malignant * 100).toFixed(2)}%</Text>
+          <Text style={styles.cardTitle}>
+            Prediction: <Text style={{ color: predictionLabel === 'High Risk' ? '#e74c3c' : '#2ecc71' }}>
+              {predictionLabel}
+            </Text>
+          </Text>
+          <Text style={styles.confidence}>Confidence: {confidence}%</Text>
+          <Text style={styles.probability}>Low Risk: {benignProbability}%</Text>
+          <Text style={styles.probability}>High Risk: {malignantProbability}%</Text>
         </View>
 
         {showOptions ? (
@@ -116,7 +125,6 @@ export default function ResultsScreen({ route, navigation }) {
             <Text style={styles.errorMessage}>Failed to save prediction.</Text>
           )
         )}
-
       </View>
     </SafeAreaView>
   );
