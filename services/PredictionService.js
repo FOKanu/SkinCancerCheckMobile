@@ -97,7 +97,7 @@ export async function getPredictionHistory(userId = null) {
     return [
       {
         id: 1,
-        image_url: 'https://via.placeholder.com/120',
+        image_url: require('../assets/Skin check ai logo.png'),
         prediction: 'benign',
         confidence: 0.92,
         scanned_at: new Date().toISOString(),
@@ -106,7 +106,7 @@ export async function getPredictionHistory(userId = null) {
       },
       {
         id: 2,
-        image_url: 'https://via.placeholder.com/120',
+        image_url: require('../assets/Skin check ai logo.png'),
         prediction: 'malignant',
         confidence: 0.81,
         scanned_at: new Date(Date.now() - 86400000).toISOString(),
