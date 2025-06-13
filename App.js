@@ -14,6 +14,7 @@ import LoginScreen from './screens/LoginScreen';
 import TutorialScreen from './screens/TutorialScreen';
 import AlertScreen from './screens/AlertScreen';
 import AITipsScreen from './screens/AITipsScreen';
+import ScheduleScreen from './screens/ScheduleScreen';
 import { getCurrentUser, subscribeToAuthState } from './services/AuthService';
 
 const Stack = createNativeStackNavigator();
@@ -78,10 +79,7 @@ function HomeScreen({ navigation }) {
           {/* Appointment Button */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              Alert.alert('Appointment', 'Here you can schedule an appointment!');
-              // Or navigation.navigate('Appointment');
-            }}
+            onPress={() => navigation.navigate('Schedule')}
           >
             <Ionicons name="calendar" size={24} color="#3498db" />
             <Text style={styles.actionText}>Schedule</Text>
@@ -193,6 +191,7 @@ export default function App() {
         <Stack.Screen name="Education" component={EducationScreen} />
         <Stack.Screen name="Alert" component={AlertScreen} />
         <Stack.Screen name="AITips" component={AITipsScreen} />
+        <Stack.Screen name="Schedule" component={ScheduleScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
