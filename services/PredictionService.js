@@ -62,8 +62,8 @@ export async function savePredictionToSupabase(result, imageUri, spotId) {
           image_url: result.uploadedImageUrl,
           prediction: result.prediction,
           confidence: result.confidence,
-          benign_probability: result.probabilities.benign,
-          malignant_probability: result.probabilities.malignant,
+          low_risk_probability: result.probabilities['Low Risk'],
+          high_risk_probability: result.probabilities['High Risk'],
           scanned_at: new Date().toISOString(),
         },
       ]);
@@ -93,25 +93,25 @@ export async function savePredictionToSupabase(result, imageUri, spotId) {
 export async function getPredictionHistory(userId = null) {
   // If using placeholder, return dummy data
   if (supabase.__isPlaceholder) {
-    // NOTE: 'benign' and 'malignant' are mapped to 'Low Risk' and 'High Risk' in the UI using getDisplayLabel
+    // Now using 'Low Risk' and 'High Risk' internally
     return [
       {
         id: 1,
         image_url: 'https://via.placeholder.com/120',
-        prediction: 'benign',
+        prediction: 'Low Risk',
         confidence: 0.92,
         scanned_at: new Date().toISOString(),
-        benign_probability: 0.92,
-        malignant_probability: 0.08,
+        low_risk_probability: 0.92,
+        high_risk_probability: 0.08,
       },
       {
         id: 2,
         image_url: 'https://via.placeholder.com/120',
-        prediction: 'malignant',
+        prediction: 'High Risk',
         confidence: 0.81,
         scanned_at: new Date(Date.now() - 86400000).toISOString(),
-        benign_probability: 0.19,
-        malignant_probability: 0.81,
+        low_risk_probability: 0.19,
+        high_risk_probability: 0.81,
       },
     ];
   }

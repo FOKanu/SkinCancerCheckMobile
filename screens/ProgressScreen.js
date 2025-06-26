@@ -7,8 +7,8 @@ import { getCurrentUser } from '../services/AuthService';
 export default function ProgressScreen() {
   const [stats, setStats] = useState({
     totalScans: 0,
-    benignCount: 0,
-    malignantCount: 0,
+    lowRiskCount: 0,
+    highRiskCount: 0,
     averageConfidence: 0,
   });
 
@@ -17,14 +17,14 @@ export default function ProgressScreen() {
       const currentUser = getCurrentUser();
       const history = await getPredictionHistory(currentUser?.id);
       const totalScans = history.length;
-      const benignCount = history.filter(item => item.prediction === 'benign').length;
-      const malignantCount = history.filter(item => item.prediction === 'malignant').length;
+      const lowRiskCount = history.filter(item => item.prediction === 'Low Risk').length;
+      const highRiskCount = history.filter(item => item.prediction === 'High Risk').length;
       const averageConfidence = history.reduce((acc, item) => acc + item.confidence, 0) / totalScans || 0;
 
       setStats({
         totalScans,
-        benignCount,
-        malignantCount,
+        lowRiskCount,
+        highRiskCount,
         averageConfidence,
       });
     };
@@ -64,13 +64,13 @@ export default function ProgressScreen() {
           )}
           {renderStatCard(
             'Low Risk Results',
-            stats.benignCount,
+            stats.lowRiskCount,
             'happy',
             '#2ecc71'
           )}
           {renderStatCard(
             'High Risk Results',
-            stats.malignantCount,
+            stats.highRiskCount,
             'sad',
             '#e74c3c'
           )}

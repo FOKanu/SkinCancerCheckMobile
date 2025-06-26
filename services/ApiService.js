@@ -127,15 +127,15 @@ export async function predictSkinLesion(imageUri) {
     if (apiResponse.status === 'error') {
       throw new Error(apiResponse.error || 'Prediction failed');
     }
-    const prediction = apiResponse.predicted_class === 0 ? 'benign' : 'malignant';
-    const malignantProbability = apiResponse.predicted_class === 1 ? apiResponse.confidence : (1 - apiResponse.confidence);
-    const benignProbability = 1 - malignantProbability;
+    const prediction = apiResponse.predicted_class === 0 ? 'Low Risk' : 'High Risk';
+    const highRiskProbability = apiResponse.predicted_class === 1 ? apiResponse.confidence : (1 - apiResponse.confidence);
+    const lowRiskProbability = 1 - highRiskProbability;
     return {
       prediction,
       confidence: apiResponse.confidence,
       probabilities: {
-        benign: benignProbability,
-        malignant: malignantProbability,
+        'Low Risk': lowRiskProbability,
+        'High Risk': highRiskProbability,
       },
       uploadedImageUrl: imageUrlForAPI, // Return the public URL for saving to database
     };
@@ -146,7 +146,6 @@ export async function predictSkinLesion(imageUri) {
 }
 
 export function getDisplayLabel(prediction) {
-  if (prediction === 'benign') return 'Low Risk';
-  if (prediction === 'malignant') return 'High Risk';
+  // Since we're now using 'Low Risk' and 'High Risk' internally, just return as is
   return prediction;
 }

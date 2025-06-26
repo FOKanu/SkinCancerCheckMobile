@@ -10,8 +10,8 @@ export async function createPredictionsTable() {
       image_url text not null,
       prediction text not null,
       confidence float not null,
-      benign_probability float not null,
-      malignant_probability float not null,
+      low_risk_probability float not null,
+      high_risk_probability float not null,
       created_at timestamp with time zone default timezone('utc'::text, now()) not null
     `
   });

@@ -84,8 +84,8 @@ export default function ResultsScreen({ route, navigation }) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Prediction: <Text style={{ color: getDisplayLabel(result.prediction) === 'High Risk' ? '#e74c3c' : '#2ecc71' }}>{getDisplayLabel(result.prediction)}</Text></Text>
           <Text style={styles.confidence}>Confidence: {(result.confidence * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>Low Risk: {(result.probabilities.benign * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>High Risk: {(result.probabilities.malignant * 100).toFixed(2)}%</Text>
+          <Text style={styles.probability}>Low Risk: {(result.probabilities['Low Risk'] * 100).toFixed(2)}%</Text>
+          <Text style={styles.probability}>High Risk: {(result.probabilities['High Risk'] * 100).toFixed(2)}%</Text>
         </View>
 
         {showOptions ? (
