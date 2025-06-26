@@ -12,6 +12,9 @@ import ProgressScreen from './screens/ProgressScreen';
 import EducationScreen from './screens/EducationScreen';
 import LoginScreen from './screens/LoginScreen';
 import TutorialScreen from './screens/TutorialScreen';
+import AlertScreen from './screens/AlertScreen';
+import AITipsScreen from './screens/AITipsScreen';
+import ScheduleScreen from './screens/ScheduleScreen';
 import { getCurrentUser, subscribeToAuthState } from './services/AuthService';
 
 const Stack = createNativeStackNavigator();
@@ -58,10 +61,7 @@ function HomeScreen({ navigation }) {
           {/* Alert Button */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              Alert.alert('Alert', 'This is your alert action!');
-              // Or navigation.navigate('Alert');
-            }}
+            onPress={() => navigation.navigate('Alert')}
           >
             <Ionicons name="alert-circle" size={24} color="#e74c3c" />
             <Text style={styles.actionText}>Alert</Text>
@@ -70,10 +70,7 @@ function HomeScreen({ navigation }) {
           {/* AI Powered Tips Button */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              Alert.alert('AI Powered Tips', 'Here are your AI-powered health tips!');
-              // Or navigation.navigate('AITips');
-            }}
+            onPress={() => navigation.navigate('AITips')}
           >
             <Ionicons name="bulb" size={24} color="#f1c40f" />
             <Text style={styles.actionText}>AI Tips</Text>
@@ -82,10 +79,7 @@ function HomeScreen({ navigation }) {
           {/* Appointment Button */}
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              Alert.alert('Appointment', 'Here you can schedule an appointment!');
-              // Or navigation.navigate('Appointment');
-            }}
+            onPress={() => navigation.navigate('Schedule')}
           >
             <Ionicons name="calendar" size={24} color="#3498db" />
             <Text style={styles.actionText}>Schedule</Text>
@@ -195,6 +189,9 @@ export default function App() {
         <Stack.Screen name="History" component={HistoryScreen} />
         <Stack.Screen name="Progress" component={ProgressScreen} />
         <Stack.Screen name="Education" component={EducationScreen} />
+        <Stack.Screen name="Alert" component={AlertScreen} />
+        <Stack.Screen name="AITips" component={AITipsScreen} />
+        <Stack.Screen name="Schedule" component={ScheduleScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

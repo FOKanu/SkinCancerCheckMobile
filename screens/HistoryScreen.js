@@ -69,7 +69,11 @@ export default function HistoryScreen({ navigation }) {
             style={styles.card}
             onPress={() => navigation.navigate('Results', { result: item, imageUri: item.image_url })}
           >
-            <Image source={{ uri: item.image_url }} style={styles.preview} />
+            <Image
+              source={typeof item.image_url === 'string' ? { uri: item.image_url } : item.image_url}
+              style={styles.preview}
+              resizeMode="cover"
+            />
             <View style={styles.cardContent}>
               <View style={styles.predictionContainer}>
                 <Text style={styles.predictionLabel}>Prediction:</Text>

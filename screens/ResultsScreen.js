@@ -70,6 +70,11 @@ export default function ResultsScreen({ route, navigation }) {
     );
   }
 
+  const predictionLabel = getDisplayLabel(result.prediction);
+  const confidence = result.confidence ? (result.confidence * 100).toFixed(2) : '0.00';
+  const benignProbability = result.probabilities?.benign ? (result.probabilities.benign * 100).toFixed(2) : '0.00';
+  const malignantProbability = result.probabilities?.malignant ? (result.probabilities.malignant * 100).toFixed(2) : '0.00';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -116,7 +121,6 @@ export default function ResultsScreen({ route, navigation }) {
             <Text style={styles.errorMessage}>Failed to save prediction.</Text>
           )
         )}
-
       </View>
     </SafeAreaView>
   );
