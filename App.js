@@ -1,3 +1,4 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
@@ -5,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Alert } from 'react-native';
+import 'react-native-gesture-handler';
 import ScanScreen from './screens/ScanScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import HistoryScreen from './screens/HistoryScreen';
@@ -18,6 +20,35 @@ import ScheduleScreen from './screens/ScheduleScreen';
 import { getCurrentUser, subscribeToAuthState } from './services/AuthService';
 
 const Stack = createNativeStackNavigator();
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorText}>Please restart the app</Text>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function HomeScreen({ navigation }) {
   const [selectedTab, setSelectedTab] = useState('home');
@@ -129,71 +160,39 @@ function HomeScreen({ navigation }) {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Set to false to skip loading
 
   useEffect(() => {
-    // Initial auth check
-    checkAuth();
-
-    // Subscribe to auth state changes
-    const unsubscribe = subscribeToAuthState((isAuth, user) => {
-      console.log('Auth state changed:', isAuth, user);
-      setIsAuthenticated(isAuth);
-      if (isAuth) {
-        setShowTutorial(true);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const checkAuth = async () => {
+    // Simplified auth check
     try {
-      const user = await getCurrentUser();
-      setIsAuthenticated(!!user);
-      if (user) {
-        setShowTutorial(true);
-      }
+      setIsAuthenticated(true); // Always authenticate for now
     } catch (error) {
       console.error('Auth check error:', error);
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const handleTutorialClose = () => {
-    setShowTutorial(false);
-  };
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  }, []);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Tutorial" component={TutorialScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Scan" component={ScanScreen} />
-        <Stack.Screen name="Results" component={ResultsScreen} />
-        <Stack.Screen name="History" component={HistoryScreen} />
-        <Stack.Screen name="Progress" component={ProgressScreen} />
-        <Stack.Screen name="Education" component={EducationScreen} />
-        <Stack.Screen name="Alert" component={AlertScreen} />
-        <Stack.Screen name="AITips" component={AITipsScreen} />
-        <Stack.Screen name="Schedule" component={ScheduleScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ErrorBoundary>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Tutorial" component={TutorialScreen} />
+          <Stack.Screen name="Scan" component={ScanScreen} />
+          <Stack.Screen name="Results" component={ResultsScreen} />
+          <Stack.Screen name="History" component={HistoryScreen} />
+          <Stack.Screen name="Progress" component={ProgressScreen} />
+          <Stack.Screen name="Education" component={EducationScreen} />
+          <Stack.Screen name="Alert" component={AlertScreen} />
+          <Stack.Screen name="AITips" component={AITipsScreen} />
+          <Stack.Screen name="Schedule" component={ScheduleScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 }
 
@@ -201,6 +200,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#e74c3c',
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#7f8c8d',
   },
   loadingContainer: {
     flex: 1,
@@ -234,10 +249,13 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   cardTitle: {
     fontSize: 24,
@@ -257,14 +275,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  secondaryButton: {
-    backgroundColor: '#2ecc71',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
@@ -272,7 +282,7 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginBottom: 24,
   },
   actionButton: {
@@ -280,38 +290,48 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    width: '30%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   actionText: {
     marginTop: 8,
-    color: '#2c3e50',
     fontSize: 14,
+    color: '#2c3e50',
+    fontWeight: '500',
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#2c3e50',
     marginBottom: 12,
   },
   emptyText: {
-    color: '#7f8c8d',
     textAlign: 'center',
-    marginBottom: 12,
+    color: '#7f8c8d',
+    marginBottom: 16,
+  },
+  secondaryButton: {
+    backgroundColor: '#ecf0f1',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
   },
   navigation: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
+    paddingVertical: 8,
   },
   navItem: {
     flex: 1,
@@ -319,8 +339,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   selectedNavItem: {
-    borderTopWidth: 2,
-    borderTopColor: '#3498db',
+    backgroundColor: '#f8f9fa',
   },
   navText: {
     fontSize: 12,
@@ -329,5 +348,6 @@ const styles = StyleSheet.create({
   },
   selectedNavText: {
     color: '#3498db',
+    fontWeight: '600',
   },
 });

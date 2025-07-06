@@ -1,4 +1,4 @@
-import { initializeDatabase } from './services/DatabaseService';
+import { initializeDatabase } from './services/DatabaseService.js';
 
 // Initialize the database
 initializeDatabase()

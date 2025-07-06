@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  scoring-api:
+    build: ./scoring-api
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    volumes:
+      - ./scoring-api/app/models:/app/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

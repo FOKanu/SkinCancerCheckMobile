@@ -1,86 +1,126 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient.js';
 
-// Create predictions table
+// Create predictions table using direct SQL
 export async function createPredictionsTable() {
-  const { error } = await supabase.rpc('create_predictions_table', {
-    table_name: 'predictions',
-    columns: `
-      id uuid default uuid_generate_v4() primary key,
-      user_id uuid references auth.users(id),
-      image_url text not null,
-      prediction text not null,
-      confidence float not null,
-      low_risk_probability float not null,
-      high_risk_probability float not null,
-      created_at timestamp with time zone default timezone('utc'::text, now()) not null
-    `
-  });
+  const { error } = await supabase
+    .from('predictions')
+    .select('*')
+    .limit(1);
 
-  if (error) {
-    console.error('Error creating predictions table:', error);
-    return false;
+  if (error && error.code === '42P01') {
+    // Table doesn't exist, create it
+    console.log('Creating predictions table...');
+    const { error: createError } = await supabase.rpc('exec_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS predictions (
+          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+          user_id UUID REFERENCES auth.users(id),
+          image_url TEXT NOT NULL,
+          prediction TEXT NOT NULL,
+          confidence FLOAT NOT NULL,
+          low_risk_probability FLOAT NOT NULL,
+          high_risk_probability FLOAT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+      `
+    });
+
+    if (createError) {
+      console.error('Error creating predictions table:', createError);
+      return false;
+    }
   }
   return true;
 }
 
-// Create users table
+// Create users table using direct SQL
 export async function createUsersTable() {
-  const { error } = await supabase.rpc('create_users_table', {
-    table_name: 'users',
-    columns: `
-      id uuid references auth.users(id) primary key,
-      email text unique not null,
-      full_name text,
-      created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-      last_login timestamp with time zone
-    `
-  });
+  const { error } = await supabase
+    .from('users')
+    .select('*')
+    .limit(1);
 
-  if (error) {
-    console.error('Error creating users table:', error);
-    return false;
+  if (error && error.code === '42P01') {
+    // Table doesn't exist, create it
+    console.log('Creating users table...');
+    const { error: createError } = await supabase.rpc('exec_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS users (
+          id UUID REFERENCES auth.users(id) PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          full_name TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+          last_login TIMESTAMP WITH TIME ZONE
+        );
+      `
+    });
+
+    if (createError) {
+      console.error('Error creating users table:', createError);
+      return false;
+    }
   }
   return true;
 }
 
-// Create skin_care_tips table
+// Create skin_care_tips table using direct SQL
 export async function createSkinCareTipsTable() {
-  const { error } = await supabase.rpc('create_skin_care_tips_table', {
-    table_name: 'skin_care_tips',
-    columns: `
-      id uuid default uuid_generate_v4() primary key,
-      title text not null,
-      description text not null,
-      category text not null,
-      created_at timestamp with time zone default timezone('utc'::text, now()) not null
-    `
-  });
+  const { error } = await supabase
+    .from('skin_care_tips')
+    .select('*')
+    .limit(1);
 
-  if (error) {
-    console.error('Error creating skin_care_tips table:', error);
-    return false;
+  if (error && error.code === '42P01') {
+    // Table doesn't exist, create it
+    console.log('Creating skin_care_tips table...');
+    const { error: createError } = await supabase.rpc('exec_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS skin_care_tips (
+          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+      `
+    });
+
+    if (createError) {
+      console.error('Error creating skin_care_tips table:', createError);
+      return false;
+    }
   }
   return true;
 }
 
-// Create products table
+// Create products table using direct SQL
 export async function createProductsTable() {
-  const { error } = await supabase.rpc('create_products_table', {
-    table_name: 'products',
-    columns: `
-      id uuid default uuid_generate_v4() primary key,
-      name text not null,
-      description text not null,
-      category text not null,
-      rating float not null,
-      image_url text,
-      created_at timestamp with time zone default timezone('utc'::text, now()) not null
-    `
-  });
+  const { error } = await supabase
+    .from('products')
+    .select('*')
+    .limit(1);
 
-  if (error) {
-    console.error('Error creating products table:', error);
-    return false;
+  if (error && error.code === '42P01') {
+    // Table doesn't exist, create it
+    console.log('Creating products table...');
+    const { error: createError } = await supabase.rpc('exec_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS products (
+          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL,
+          rating FLOAT NOT NULL,
+          image_url TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+      `
+    });
+
+    if (createError) {
+      console.error('Error creating products table:', createError);
+      return false;
+    }
   }
   return true;
 }
