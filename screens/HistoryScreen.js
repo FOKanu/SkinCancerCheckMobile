@@ -73,6 +73,9 @@ export default function HistoryScreen({ navigation }) {
               source={typeof item.image_url === 'string' ? { uri: item.image_url } : item.image_url}
               style={styles.preview}
               resizeMode="cover"
+              onError={(error) => {
+                console.log('Image failed to load:', item.image_url, error);
+              }}
             />
             <View style={styles.cardContent}>
               <View style={styles.predictionContainer}>

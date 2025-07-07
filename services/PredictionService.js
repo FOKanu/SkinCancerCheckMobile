@@ -89,6 +89,40 @@ export async function savePredictionToSupabase(result, imageUri, spotId) {
   }
 }
 
+// Function to get demo images from Supabase bucket
+async function getDemoImages() {
+  try {
+    // List files in the lesion-images bucket
+    const { data: files, error } = await supabase.storage
+      .from('lesion-images')
+      .list('public', {
+        limit: 100,
+        offset: 0,
+      });
+
+    if (error) {
+      console.error('Error listing demo images:', error);
+      return [];
+    }
+
+    // Get public URLs for the images
+    const imageUrls = files
+      .filter(file => file.name.match(/\.(jpg|jpeg|png|webp)$/i))
+      .map(file => {
+        const { data } = supabase.storage
+          .from('lesion-images')
+          .getPublicUrl(`public/${file.name}`);
+        return data.publicUrl;
+      });
+
+    console.log('Found demo images:', imageUrls.length);
+    return imageUrls;
+  } catch (error) {
+    console.error('Error getting demo images:', error);
+    return [];
+  }
+}
+
 export async function getPredictionHistory(userId = null) {
   try {
     // Get current user if userId not provided
@@ -127,17 +161,35 @@ export async function getPredictionHistory(userId = null) {
 
     console.log('Successfully fetched prediction history:', data?.length || 0, 'records');
 
+    // Get demo images for demo users
+    let demoImages = [];
+    if (currentUser?.email === 'demo@skincheckai.com') {
+      demoImages = await getDemoImages();
+    }
+
     // Transform the data to match the expected format
-    return data.map(scan => ({
-      id: scan.id,
-      prediction: scan.prediction,
-      scanned_at: scan.scanned_at,
-      // Add mock values for fields not in your schema
-      confidence: 0.85,
-      low_risk_probability: scan.prediction === 'Low Risk' ? 0.85 : 0.15,
-      high_risk_probability: scan.prediction === 'High Risk' ? 0.85 : 0.15,
-      image_url: require('../assets/Skin check ai logo.png'),
-    }));
+    return data.map((scan, index) => {
+      // For demo users, use real images from bucket, otherwise use placeholder
+      let imageUrl;
+      if (currentUser?.email === 'demo@skincheckai.com' && demoImages.length > 0) {
+        // Cycle through demo images
+        imageUrl = demoImages[index % demoImages.length];
+      } else {
+        // Use placeholder for non-demo users or if no demo images available
+        imageUrl = require('../assets/Skin check ai logo.png');
+      }
+
+      return {
+        id: scan.id,
+        prediction: scan.prediction,
+        scanned_at: scan.scanned_at,
+        // Add mock values for fields not in your schema
+        confidence: 0.85,
+        low_risk_probability: scan.prediction === 'Low Risk' ? 0.85 : 0.15,
+        high_risk_probability: scan.prediction === 'High Risk' ? 0.85 : 0.15,
+        image_url: imageUrl,
+      };
+    });
   } catch (error) {
     console.error('Error in getPredictionHistory:', error);
     return [];
