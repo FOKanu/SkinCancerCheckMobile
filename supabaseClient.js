@@ -1,49 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
-import { ensureMockUserExists } from './services/AuthService';
 
-// Initialize the Supabase client
-const supabaseUrl = Constants.expoConfig.extra.supabaseUrl;
-const supabaseAnonKey = Constants.expoConfig.extra.supabaseAnonKey;
+// Initialize the Supabase client with your credentials
+const supabaseUrl = 'https://fpkbrdyzkarkfsluxksg.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwa2JyZHl6a2Fya2ZzbHV4a3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTkzMzcsImV4cCI6MjA2NDY5NTMzN30.FdRFstLqsuwJAXHtIc3QDHTsnMkRfAD2_1uxc8Wx5Og';
 
 console.log('Initializing Supabase client with:');
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Anon Key exists:', !!supabaseAnonKey);
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase credentials:', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey
-  });
-  // Don't throw error, create a placeholder client instead
-  console.warn('Creating placeholder Supabase client due to missing credentials');
+  console.error('Missing Supabase credentials');
+  throw new Error('Supabase credentials are required');
 }
 
 let supabase;
 try {
-  if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
-    console.log('Supabase client initialized successfully');
-
-    // Ensure the mock user exists in the users table
-    ensureMockUserExists();
-  } else {
-    // Create a placeholder client for development
-    supabase = {
-      __isPlaceholder: true,
-      auth: { onAuthStateChange: () => {} },
-      from: () => ({ select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) })
-    };
-    console.log('Placeholder Supabase client created');
-  }
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false
+    }
+  });
+  console.log('Supabase client initialized successfully');
 } catch (error) {
   console.error('Error initializing Supabase client:', error);
-  // Create placeholder instead of throwing
-  supabase = {
-    __isPlaceholder: true,
-    auth: { onAuthStateChange: () => {} },
-    from: () => ({ select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) })
-  };
+  throw error;
 }
 
 // Add error handling and logging

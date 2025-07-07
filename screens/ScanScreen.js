@@ -47,10 +47,16 @@ export default function ScanScreen({ navigation }) {
     if (!imageUri) return;
     setLoading(true);
     try {
+      console.log('Starting image analysis for:', imageUri);
       const result = await analyzePrediction(imageUri);
+      console.log('Analysis completed successfully:', result);
       navigation.navigate('Results', { result, imageUri });
     } catch (error) {
-      Alert.alert('Error', 'Failed to analyze image');
+      console.error('Image analysis failed:', error);
+      Alert.alert(
+        'Analysis Failed',
+        `Failed to analyze image: ${error.message || 'Unknown error occurred'}`
+      );
     } finally {
       setLoading(false);
     }

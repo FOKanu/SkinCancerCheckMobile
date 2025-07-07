@@ -14,8 +14,8 @@ const { width } = Dimensions.get('window');
 
 const steps = [
   {
-    title: "Welcome to Skin Check AI",
-    content: "This app helps you monitor your skin health using AI-powered analysis. Let's walk you through some important information to get started.",
+    title: "Welcome to SkinCheckAI",
+    content: "Your AI-powered skin health companion. Let's walk you through how to use the app safely and effectively.",
     icon: 'medkit',
   },
   {
@@ -30,7 +30,7 @@ const steps = [
   },
   {
     title: "Confidence Levels",
-    content: "If the app detects potential cancer with a confidence level above 55%, please consult a physician immediately. Early detection is crucial for successful treatment.",
+    content: "If the app detects potential concerns with a confidence level above 55%, please consult a physician immediately. Early detection is crucial for successful treatment.",
     icon: 'alert-circle',
   },
   {
@@ -52,11 +52,19 @@ export default function TutorialScreen({ navigation }) {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      navigation.replace('Home');
+      // Tutorial completed, navigate to Home
+      handleTutorialComplete();
     }
   };
 
   const handleSkip = () => {
+    // Skip tutorial and go to Home
+    handleTutorialComplete();
+  };
+
+  const handleTutorialComplete = () => {
+    console.log('TutorialScreen: Tutorial completed, navigating to Home');
+    // Navigate to Home screen and replace the current screen
     navigation.replace('Home');
   };
 

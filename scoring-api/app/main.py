@@ -63,7 +63,7 @@ async def predict(file: UploadFile = File(...)) -> Dict[str, Any]:
 
         # Try to open the image
         try:
-        image = Image.open(io.BytesIO(contents))
+            image = Image.open(io.BytesIO(contents))
             logger.info(f"Image opened successfully. Mode: {image.mode}, Size: {image.size}")
         except Exception as img_error:
             logger.error(f"Failed to open image: {str(img_error)}")
@@ -79,8 +79,8 @@ async def predict(file: UploadFile = File(...)) -> Dict[str, Any]:
 
         # Preprocess the image
         try:
-        image_tensor = transform(image).unsqueeze(0).to(device)
-        logger.info("Image preprocessed successfully")
+            image_tensor = transform(image).unsqueeze(0).to(device)
+            logger.info("Image preprocessed successfully")
         except Exception as transform_error:
             logger.error(f"Failed to preprocess image: {str(transform_error)}")
             return {
@@ -90,14 +90,14 @@ async def predict(file: UploadFile = File(...)) -> Dict[str, Any]:
 
         # Make prediction
         try:
-        with torch.no_grad():
-            logger.info("Starting model inference")
-            prediction = model(image_tensor)
-            logger.info("Model inference completed")
-            probabilities = torch.softmax(prediction, dim=1)
-            predicted_class = torch.argmax(probabilities, dim=1).item()
-            confidence = probabilities[0][predicted_class].item()
-            logger.info(f"Prediction completed: class {predicted_class}, confidence {confidence}")
+            with torch.no_grad():
+                logger.info("Starting model inference")
+                prediction = model(image_tensor)
+                logger.info("Model inference completed")
+                probabilities = torch.softmax(prediction, dim=1)
+                predicted_class = torch.argmax(probabilities, dim=1).item()
+                confidence = probabilities[0][predicted_class].item()
+                logger.info(f"Prediction completed: class {predicted_class}, confidence {confidence}")
         except Exception as pred_error:
             logger.error(f"Model prediction failed: {str(pred_error)}")
             return {
@@ -120,4 +120,4 @@ async def predict(file: UploadFile = File(...)) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=4000)

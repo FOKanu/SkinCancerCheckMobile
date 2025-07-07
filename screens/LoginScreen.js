@@ -8,83 +8,140 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { signIn } from '../services/AuthService';
+import { signIn, enableDemoMode } from '../services/AuthService';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    setLoading(true);
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const { user } = await signIn(email, password);
-      console.log('Login successful with user:', user);
-      navigation.replace('Tutorial');
+      await signIn(email, password);
+      // Navigation will be handled by App.js auth state
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'An error occurred during login');
+      Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Skin Cancer Check</Text>
-      </View>
+  const handleQuickDemoLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Enable demo mode and create a mock user
+      enableDemoMode();
+      await signIn('demo@skincheckai.com', 'demo123');
+      console.log('Quick demo login successful');
+      // Navigation will be handled by App.js auth state
+    } catch (error) {
+      console.error('Quick demo login error:', error);
+      Alert.alert('Demo Login Failed', 'Unable to start demo mode');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      <View style={styles.content}>
-        <View style={styles.form}>
+  const handleRegister = () => {
+    navigation.navigate('Register');
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/Skin_check_ai_logo_transparent.png')} style={styles.logoImage} />
+          <Text style={styles.tagline}>Your AI-Powered Skin Health Companion</Text>
+        </View>
+
+        <View style={styles.formContainer}>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Sign in to continue your skin health journey</Text>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email or Username (optional)"
+              placeholder="Enter your email"
               value={email}
               onChangeText={setEmail}
-              autoCapitalize="none"
               keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Password (optional)"
+              placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
 
           <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            style={[styles.loginButton, isLoading && styles.disabledButton]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            )}
+            <Text style={styles.loginButtonText}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </Text>
           </TouchableOpacity>
 
-          <View style={styles.demoCredentials}>
-            <Text style={styles.demoTitle}>Note:</Text>
-            <Text style={styles.demoText}>Any credentials will work for testing</Text>
-            <Text style={styles.demoText}>You can even leave fields empty</Text>
+          <TouchableOpacity
+            style={[styles.demoButton, isLoading && styles.disabledButton]}
+            onPress={handleQuickDemoLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.demoButtonText}>
+              {isLoading ? 'Starting Demo...' : '🚀 Quick Demo Login'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
           </View>
+
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            <Text style={styles.registerButtonText}>Create New Account</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </SafeAreaView>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -93,24 +150,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
   },
-  form: {
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 10,
+  },
+  logoImage: {
+    width: 140,
+    height: 140,
+    resizeMode: 'contain',
+    marginBottom: 20,
+  },
+  tagline: {
+    fontSize: 16,
+    color: '#7f8c8d',
+  },
+  formContainer: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 12,
@@ -132,21 +191,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 8,
+  },
+  input: {
+    height: 48,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
-    marginBottom: 16,
-    paddingHorizontal: 12,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    height: 48,
-    fontSize: 16,
+    padding: 12,
   },
   loginButton: {
     backgroundColor: '#3498db',
@@ -155,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  loginButtonDisabled: {
+  disabledButton: {
     opacity: 0.7,
   },
   loginButtonText: {
@@ -163,21 +221,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  demoCredentials: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#f8f9fa',
+  demoButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
     borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
   },
-  demoTitle: {
+  demoButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 8,
   },
-  demoText: {
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: '#7f8c8d',
+  },
+  registerButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  footerText: {
     fontSize: 14,
     color: '#7f8c8d',
-    marginBottom: 4,
   },
 });

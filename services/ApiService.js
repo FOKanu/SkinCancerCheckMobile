@@ -85,23 +85,11 @@ const uploadImageToSupabase = async (imageUri) => {
 
 export async function predictSkinLesion(imageUri) {
   console.log('Using API URL:', API_BASE_URL); // Debug log
-
-  let imageUrlForAPI = imageUri; // Default to original URI
-
-  try {
-    // Upload image to Supabase Storage first
-    const publicImageUrl = await uploadImageToSupabase(imageUri);
-    imageUrlForAPI = publicImageUrl; // Use public URL for API if needed
-  } catch (uploadError) {
-    console.error('Failed to upload image to Supabase Storage, proceeding with original URI for API:', uploadError);
-    // Continue with original URI if upload fails
-  }
+  console.log('Image URI:', imageUri); // Debug log
 
   const formData = new FormData();
-  // For the scoring API, we'll still send the local URI as a file.
-  // The type of the file in formData.append should ideally match the actual image type.
-  // We can try to infer it from the imageUri or the Base64 prefix if needed, but for now,
-  // we'll keep it as image/jpeg as most ML models expect JPEG.
+
+  // Determine the correct MIME type based on file extension
   let formDataType = 'image/jpeg';
   if (imageUri.toLowerCase().endsWith('.png')) {
     formDataType = 'image/png';
@@ -109,13 +97,17 @@ export async function predictSkinLesion(imageUri) {
     formDataType = 'image/webp';
   }
 
+  console.log('Using MIME type:', formDataType); // Debug log
+
   formData.append('file', {
     uri: imageUri,
     name: 'photo.jpg',
-    type: formDataType, // Use dynamically determined type
+    type: formDataType,
   });
 
   try {
+    console.log('Sending request to:', `${API_BASE_URL}/predict`); // Debug log
+
     const response = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       body: formData,
@@ -123,25 +115,52 @@ export async function predictSkinLesion(imageUri) {
         'Content-Type': 'multipart/form-data',
       },
     });
+
+    console.log('Response status:', response.status); // Debug log
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API response error:', errorText);
+      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+    }
+
     const apiResponse = await response.json();
+    console.log('API response:', apiResponse); // Debug log
+
     if (apiResponse.status === 'error') {
       throw new Error(apiResponse.error || 'Prediction failed');
     }
+
+    // Convert the API response to the expected format
     const prediction = apiResponse.predicted_class === 0 ? 'Low Risk' : 'High Risk';
     const highRiskProbability = apiResponse.predicted_class === 1 ? apiResponse.confidence : (1 - apiResponse.confidence);
     const lowRiskProbability = 1 - highRiskProbability;
-    return {
+
+    const result = {
       prediction,
       confidence: apiResponse.confidence,
       probabilities: {
         'Low Risk': lowRiskProbability,
         'High Risk': highRiskProbability,
       },
-      uploadedImageUrl: imageUrlForAPI, // Return the public URL for saving to database
     };
+
+    console.log('Processed result:', result); // Debug log
+
+    // Upload image to Supabase Storage for storage purposes (not for API)
+    try {
+      const publicImageUrl = await uploadImageToSupabase(imageUri);
+      result.uploadedImageUrl = publicImageUrl;
+      console.log('Image uploaded to Supabase:', publicImageUrl);
+    } catch (uploadError) {
+      console.error('Failed to upload image to Supabase Storage:', uploadError);
+      // Don't fail the prediction if upload fails
+    }
+
+    return result;
   } catch (error) {
     console.error('Error predicting skin lesion:', error);
-    throw error;
+    throw new Error(`Skin lesion analysis failed: ${error.message}`);
   }
 }
 
