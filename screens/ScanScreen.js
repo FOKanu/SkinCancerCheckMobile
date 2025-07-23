@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, SafeAreaView, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Alert, SafeAreaView, Image, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { analyzePrediction } from '../services/PredictionService';
+import { ImagePickerService } from '../services/ImagePickerService';
 
 export default function ScanScreen({ navigation }) {
   const [imageUri, setImageUri] = useState(null);
@@ -17,37 +17,52 @@ export default function ScanScreen({ navigation }) {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-      outputSize: { width: 224, height: 224 }
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-      logImageDimensions(result.assets[0].uri);
+    try {
+      const uri = await ImagePickerService.pickImageFromGallery();
+      if (uri) {
+        setImageUri(uri);
+        logImageDimensions(uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert(
+        'Error',
+        'Failed to pick image from gallery. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
   const takePhoto = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-      outputSize: { width: 224, height: 224 }
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-      logImageDimensions(result.assets[0].uri);
+    try {
+      const uri = await ImagePickerService.takePhotoWithCamera();
+      if (uri) {
+        setImageUri(uri);
+        logImageDimensions(uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert(
+        'Error',
+        'Failed to take photo. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
   const analyzeImage = async () => {
     if (!imageUri) return;
+
     setLoading(true);
     try {
       console.log('Starting image analysis for:', imageUri);
+
+      // Validate image before analysis
+      const isValid = await ImagePickerService.validateImageUri(imageUri);
+      if (!isValid) {
+        throw new Error('Invalid image file. Please try selecting a different image.');
+      }
+
       const result = await analyzePrediction(imageUri);
       console.log('Analysis completed successfully:', result);
       navigation.navigate('Results', { result, imageUri });
@@ -55,7 +70,8 @@ export default function ScanScreen({ navigation }) {
       console.error('Image analysis failed:', error);
       Alert.alert(
         'Analysis Failed',
-        `Failed to analyze image: ${error.message || 'Unknown error occurred'}`
+        `Failed to analyze image: ${error.message || 'Unknown error occurred'}`,
+        [{ text: 'OK' }]
       );
     } finally {
       setLoading(false);
@@ -84,6 +100,12 @@ export default function ScanScreen({ navigation }) {
         >
           <Text style={styles.analyzeButtonText}>{loading ? 'Analyzing...' : 'Analyze'}</Text>
         </TouchableOpacity>
+
+        {Platform.OS === 'ios' && (
+          <Text style={styles.iosNote}>
+            💡 Tip: For best results on iOS, ensure you have granted camera and photo library permissions.
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -99,4 +121,11 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', marginLeft: 8, fontSize: 16 },
   analyzeButton: { backgroundColor: '#2ecc71', padding: 16, borderRadius: 8, alignItems: 'center', width: 200 },
   analyzeButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  iosNote: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginTop: 20,
+    paddingHorizontal: 20
+  },
 });
