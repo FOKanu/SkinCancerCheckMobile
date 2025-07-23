@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { supabase } from '../supabaseClient'; // Import supabase client
 import * as FileSystem from 'expo-file-system'; // Import FileSystem
+import { Platform } from 'react-native';
 
 const API_BASE_URL = Constants.expoConfig.extra.scoringApiUrl || 'http://localhost:4000';
 const BUCKET_NAME = 'lesion-images'; // Your Supabase storage bucket name
@@ -11,6 +12,7 @@ const uploadImageToSupabase = async (imageUri) => {
 
   try {
     console.log('Image URI for upload:', imageUri);
+    console.log('Platform:', Platform.OS);
 
     // Get file info and ensure it exists and is not empty
     const fileInfo = await FileSystem.getInfoAsync(imageUri);
@@ -86,6 +88,7 @@ const uploadImageToSupabase = async (imageUri) => {
 export async function predictSkinLesion(imageUri) {
   console.log('Using API URL:', API_BASE_URL); // Debug log
   console.log('Image URI:', imageUri); // Debug log
+  console.log('Platform:', Platform.OS); // Debug log
 
   const formData = new FormData();
 
@@ -99,15 +102,33 @@ export async function predictSkinLesion(imageUri) {
 
   console.log('Using MIME type:', formDataType); // Debug log
 
-  formData.append('file', {
-    uri: imageUri,
-    name: 'photo.jpg',
-    type: formDataType,
-  });
-
   try {
-    console.log('Sending request to:', `${API_BASE_URL}/predict`); // Debug log
+    // For iOS, we need to handle file URIs differently
+    if (Platform.OS === 'ios') {
+      // Ensure we have a valid file URI
+      if (!imageUri.startsWith('file://')) {
+        throw new Error('Invalid file URI for iOS');
+      }
 
+      // Get file info to ensure it exists
+      const fileInfo = await FileSystem.getInfoAsync(imageUri);
+      if (!fileInfo.exists) {
+        throw new Error('Image file does not exist');
+      }
+
+      console.log('iOS file info:', fileInfo);
+    }
+
+    // Create form data with proper file handling
+    formData.append('image', {
+      uri: imageUri,
+      type: formDataType,
+      name: 'image.jpg'
+    });
+
+    console.log('FormData created successfully'); // Debug log
+
+    // Make the API request
     const response = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       body: formData,
@@ -116,55 +137,39 @@ export async function predictSkinLesion(imageUri) {
       },
     });
 
-    console.log('Response status:', response.status); // Debug log
+    console.log('API response status:', response.status); // Debug log
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API response error:', errorText);
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+      console.error('API error response:', errorText);
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const apiResponse = await response.json();
-    console.log('API response:', apiResponse); // Debug log
+    const result = await response.json();
+    console.log('API response result:', result); // Debug log
 
-    if (apiResponse.status === 'error') {
-      throw new Error(apiResponse.error || 'Prediction failed');
-    }
-
-    // Convert the API response to the expected format
-    const prediction = apiResponse.predicted_class === 0 ? 'Low Risk' : 'High Risk';
-    const highRiskProbability = apiResponse.predicted_class === 1 ? apiResponse.confidence : (1 - apiResponse.confidence);
-    const lowRiskProbability = 1 - highRiskProbability;
-
-    const result = {
-      prediction,
-      confidence: apiResponse.confidence,
-      probabilities: {
-        'Low Risk': lowRiskProbability,
-        'High Risk': highRiskProbability,
-      },
-    };
-
-    console.log('Processed result:', result); // Debug log
-
-    // Upload image to Supabase Storage for storage purposes (not for API)
+    // Upload to Supabase for storage
     try {
-      const publicImageUrl = await uploadImageToSupabase(imageUri);
-      result.uploadedImageUrl = publicImageUrl;
-      console.log('Image uploaded to Supabase:', publicImageUrl);
+      const supabaseUrl = await uploadImageToSupabase(imageUri);
+      console.log('Image uploaded to Supabase:', supabaseUrl);
     } catch (uploadError) {
-      console.error('Failed to upload image to Supabase Storage:', uploadError);
-      // Don't fail the prediction if upload fails
+      console.warn('Failed to upload to Supabase:', uploadError);
+      // Don't throw here, as the main prediction was successful
     }
 
     return result;
   } catch (error) {
-    console.error('Error predicting skin lesion:', error);
-    throw new Error(`Skin lesion analysis failed: ${error.message}`);
+    console.error('Error in predictSkinLesion:', error);
+    throw error;
   }
 }
 
 export function getDisplayLabel(prediction) {
-  // Since we're now using 'Low Risk' and 'High Risk' internally, just return as is
-  return prediction;
+  if (prediction === 0) {
+    return 'Low Risk';
+  } else if (prediction === 1) {
+    return 'High Risk';
+  } else {
+    return 'Unknown';
+  }
 }
