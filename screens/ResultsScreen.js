@@ -65,15 +65,42 @@ export default function ResultsScreen({ route, navigation }) {
   if (!result) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>No result to display.</Text>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#2c3e50" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Analysis Results</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.errorMessage}>No result to display.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Validate result structure
+  if (!result.prediction) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#2c3e50" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Analysis Results</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.errorMessage}>Invalid result format.</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   const predictionLabel = getDisplayLabel(result.prediction);
   const confidence = result.confidence ? (result.confidence * 100).toFixed(2) : '0.00';
-  const benignProbability = result.probabilities?.benign ? (result.probabilities.benign * 100).toFixed(2) : '0.00';
-  const malignantProbability = result.probabilities?.malignant ? (result.probabilities.malignant * 100).toFixed(2) : '0.00';
+  const lowRiskProbability = result.probabilities?.['Low Risk'] ? (result.probabilities['Low Risk'] * 100).toFixed(2) : '0.00';
+  const highRiskProbability = result.probabilities?.['High Risk'] ? (result.probabilities['High Risk'] * 100).toFixed(2) : '0.00';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,9 +115,9 @@ export default function ResultsScreen({ route, navigation }) {
         {imageUri && <Image source={{ uri: imageUri }} style={styles.preview} />}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Prediction: <Text style={{ color: getDisplayLabel(result.prediction) === 'High Risk' ? '#e74c3c' : '#2ecc71' }}>{getDisplayLabel(result.prediction)}</Text></Text>
-          <Text style={styles.confidence}>Confidence: {(result.confidence * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>Low Risk: {(result.probabilities['Low Risk'] * 100).toFixed(2)}%</Text>
-          <Text style={styles.probability}>High Risk: {(result.probabilities['High Risk'] * 100).toFixed(2)}%</Text>
+          <Text style={styles.confidence}>Confidence: {confidence}%</Text>
+          <Text style={styles.probability}>Low Risk: {lowRiskProbability}%</Text>
+          <Text style={styles.probability}>High Risk: {highRiskProbability}%</Text>
         </View>
 
         {showOptions ? (
