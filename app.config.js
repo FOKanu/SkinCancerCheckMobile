@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 export default {
   name: "SkinCheckAI",
-  slug: "SkinCheckAI",
+  slug: "skincheckai",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -24,7 +24,8 @@ export default {
       NSLocationWhenInUseUsageDescription: "This app may use location for health tracking features.",
       UIBackgroundModes: ["remote-notification"],
       CFBundleDisplayName: "SkinCheckAI",
-      CFBundleName: "SkinCheckAI"
+      CFBundleName: "SkinCheckAI",
+      ITSAppUsesNonExemptEncryption: false
     },
     buildNumber: "1",
     deploymentTarget: "13.0"
@@ -71,14 +72,14 @@ export default {
     ]
   ],
   extra: {
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-    scoringApiUrl: process.env.SCORING_API_URL,
+    supabaseUrl: process.env.SUPABASE_URL || "https://your-supabase-url.supabase.co",
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "your-supabase-anon-key",
+    scoringApiUrl: process.env.SCORING_API_URL || "https://your-scoring-api-url.com",
     eas: {
-      projectId: "your-project-id"
+      projectId: "5d8e3ea7-2138-427b-a593-4aa1ec068fca"
     }
   },
-  owner: "your-expo-username",
+  owner: "sageeye",
   runtimeVersion: {
     policy: "sdkVersion"
   },
