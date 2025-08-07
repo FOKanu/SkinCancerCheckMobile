@@ -12,10 +12,16 @@ export default function HistoryScreen({ navigation }) {
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true);
-      const currentUser = getCurrentUser();
-      const data = await getPredictionHistory(currentUser?.id);
-      setHistory(data);
-      setLoading(false);
+      try {
+        const currentUser = getCurrentUser();
+        const data = await getPredictionHistory(currentUser?.id);
+        setHistory(data || []);
+      } catch (error) {
+        console.error('Error fetching history:', error);
+        setHistory([]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchHistory();
   }, []);

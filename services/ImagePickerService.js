@@ -41,7 +41,7 @@ export class ImagePickerService {
         quality: 0.8,
         base64: false,
         exif: false,
-        outputSize: { width: 224, height: 224 }
+        allowsMultipleSelection: false
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -82,7 +82,8 @@ export class ImagePickerService {
         quality: 0.8,
         base64: false,
         exif: false,
-        outputSize: { width: 224, height: 224 }
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {

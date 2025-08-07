@@ -7,8 +7,15 @@ const SPOTS_TABLE_NAME = 'spots';
 const USERS_TABLE_NAME = 'users';
 
 export async function analyzePrediction(imageUri) {
-  // Only get prediction from API
-  return await predictSkinLesion(imageUri);
+  // Get prediction from API and transform to expected format
+  const apiResult = await predictSkinLesion(imageUri);
+
+  // Transform API response to match app expectations
+  return {
+    prediction: apiResult.predicted_class,
+    confidence: apiResult.confidence,
+    status: apiResult.status
+  };
 }
 
 export async function createSpot(userId = null, location = null) {
@@ -143,6 +150,11 @@ export async function getPredictionHistory(userId = null) {
 
     console.log('Fetching prediction history for user:', actualUserId);
 
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 10000);
+    });
+
     let query = supabase
       .from(SCANS_TABLE_NAME)
       .select(`
@@ -153,18 +165,50 @@ export async function getPredictionHistory(userId = null) {
     // Filter by user_id to ensure data isolation
     query = query.eq('spots.user_id', actualUserId);
 
-    const { data, error } = await query;
+    // Race between the query and timeout
+    let data, error;
+    try {
+      const result = await Promise.race([
+        query,
+        timeoutPromise
+      ]);
+      data = result.data;
+      error = result.error;
+    } catch (raceError) {
+      console.error('Error in Promise.race:', raceError);
+      error = raceError;
+    }
+
     if (error) {
       console.error('Error fetching prediction history:', error);
+
+      // Return mock data for demo users when there's an error
+      if (currentUser?.email === 'demo@skincheckai.com') {
+        console.log('Returning mock data for demo user due to error');
+        return getMockPredictionHistory();
+      }
+
       return [];
     }
 
     console.log('Successfully fetched prediction history:', data?.length || 0, 'records');
 
+    // Handle null or empty data
+    if (!data || data.length === 0) {
+      console.log('No prediction history data found');
+      return [];
+    }
+
     // Get demo images for demo users
     let demoImages = [];
     if (currentUser?.email === 'demo@skincheckai.com') {
-      demoImages = await getDemoImages();
+      try {
+        demoImages = await getDemoImages();
+        console.log('Demo images loaded:', demoImages.length);
+      } catch (imageError) {
+        console.error('Error getting demo images:', imageError);
+        // Continue without demo images
+      }
     }
 
     // Transform the data to match the expected format
@@ -192,6 +236,47 @@ export async function getPredictionHistory(userId = null) {
     });
   } catch (error) {
     console.error('Error in getPredictionHistory:', error);
+
+    // Return mock data for demo users when there's an error
+    const currentUser = getCurrentUser();
+    if (currentUser?.email === 'demo@skincheckai.com') {
+      console.log('Returning mock data for demo user due to error');
+      return getMockPredictionHistory();
+    }
+
     return [];
   }
+}
+
+// Mock prediction history for demo users when database is unavailable
+function getMockPredictionHistory() {
+  return [
+    {
+      id: 'mock-1',
+      prediction: 'Low Risk',
+      confidence: 0.92,
+      low_risk_probability: 0.92,
+      high_risk_probability: 0.08,
+      scanned_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      image_url: require('../assets/Skin check ai logo.png'),
+    },
+    {
+      id: 'mock-2',
+      prediction: 'High Risk',
+      confidence: 0.81,
+      low_risk_probability: 0.19,
+      high_risk_probability: 0.81,
+      scanned_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+      image_url: require('../assets/Skin check ai logo.png'),
+    },
+    {
+      id: 'mock-3',
+      prediction: 'Low Risk',
+      confidence: 0.88,
+      low_risk_probability: 0.88,
+      high_risk_probability: 0.12,
+      scanned_at: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+      image_url: require('../assets/Skin check ai logo.png'),
+    },
+  ];
 }

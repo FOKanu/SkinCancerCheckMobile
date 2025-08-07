@@ -6,6 +6,37 @@ import { Platform } from 'react-native';
 const API_BASE_URL = Constants.expoConfig.extra.scoringApiUrl || 'http://localhost:4000';
 const BUCKET_NAME = 'lesion-images'; // Your Supabase storage bucket name
 
+// Check if bucket exists and create if needed
+const ensureBucketExists = async () => {
+  try {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    if (error) {
+      console.error('Error listing buckets:', error);
+      return false;
+    }
+
+    const bucketExists = buckets.some(bucket => bucket.name === BUCKET_NAME);
+    if (!bucketExists) {
+      console.log(`Bucket '${BUCKET_NAME}' does not exist, creating...`);
+      const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
+      });
+      if (createError) {
+        console.error('Error creating bucket:', createError);
+        return false;
+      }
+      console.log(`Bucket '${BUCKET_NAME}' created successfully`);
+    } else {
+      console.log(`Bucket '${BUCKET_NAME}' exists`);
+    }
+    return true;
+  } catch (error) {
+    console.error('Error ensuring bucket exists:', error);
+    return false;
+  }
+};
+
 // Function to upload image to Supabase Storage
 const uploadImageToSupabase = async (imageUri) => {
   const fileName = `public/${Date.now()}.jpg`;
@@ -13,6 +44,13 @@ const uploadImageToSupabase = async (imageUri) => {
   try {
     console.log('Image URI for upload:', imageUri);
     console.log('Platform:', Platform.OS);
+
+    // Ensure bucket exists before upload
+    const bucketExists = await ensureBucketExists();
+    if (!bucketExists) {
+      console.warn('Bucket does not exist, skipping upload');
+      return null;
+    }
 
     // Get file info and ensure it exists and is not empty
     const fileInfo = await FileSystem.getInfoAsync(imageUri);
@@ -90,6 +128,16 @@ export async function predictSkinLesion(imageUri) {
   console.log('Image URI:', imageUri); // Debug log
   console.log('Platform:', Platform.OS); // Debug log
 
+  // Validate image URI
+  if (!imageUri) {
+    throw new Error('No image URI provided');
+  }
+
+  // Ensure proper URI format
+  if (Platform.OS === 'ios' && !imageUri.startsWith('file://')) {
+    throw new Error('Invalid file URI format for iOS');
+  }
+
   const formData = new FormData();
 
   // Determine the correct MIME type based on file extension
@@ -101,6 +149,7 @@ export async function predictSkinLesion(imageUri) {
   }
 
   console.log('Using MIME type:', formDataType); // Debug log
+  console.log('Image URI extension:', imageUri.split('.').pop()); // Debug log
 
   try {
     // For iOS, we need to handle file URIs differently
@@ -120,29 +169,56 @@ export async function predictSkinLesion(imageUri) {
     }
 
     // Create form data with proper file handling
-    formData.append('image', {
+    const fileData = {
       uri: imageUri,
       type: formDataType,
       name: 'image.jpg'
-    });
+    };
+
+    console.log('File data object:', fileData); // Debug log
+    formData.append('file', fileData);
 
     console.log('FormData created successfully'); // Debug log
 
     // Make the API request
-    const response = await fetch(`${API_BASE_URL}/predict`, {
+    const requestUrl = `${API_BASE_URL}/predict`;
+    console.log('Making request to:', requestUrl); // Debug log
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      // Let the browser set the Content-Type automatically for FormData
     });
+
+    console.log('API response status:', response.status); // Debug log
+    console.log('API response headers:', response.headers); // Debug log
 
     console.log('API response status:', response.status); // Debug log
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API error response:', errorText);
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+
+          if (response.status === 422) {
+      console.log('422 error detected - checking image format...'); // Debug log
+
+      // Log more details about the image
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(imageUri);
+        console.log('File info for debugging:', fileInfo);
+
+        // Try to read first few bytes to check format
+        const base64 = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
+        console.log('Image base64 length:', base64.length);
+        console.log('First 100 chars of base64:', base64.substring(0, 100));
+      } catch (debugError) {
+        console.error('Error reading image for debugging:', debugError);
+      }
+
+      throw new Error(`Image format error (422): Please ensure the image is in JPEG, PNG, or WebP format and is not corrupted.`);
+    }
+
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -151,7 +227,11 @@ export async function predictSkinLesion(imageUri) {
     // Upload to Supabase for storage
     try {
       const supabaseUrl = await uploadImageToSupabase(imageUri);
-      console.log('Image uploaded to Supabase:', supabaseUrl);
+      if (supabaseUrl) {
+        console.log('Image uploaded to Supabase:', supabaseUrl);
+      } else {
+        console.log('Image upload skipped (bucket not available)');
+      }
     } catch (uploadError) {
       console.warn('Failed to upload to Supabase:', uploadError);
       // Don't throw here, as the main prediction was successful
