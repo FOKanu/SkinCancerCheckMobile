@@ -101,34 +101,64 @@ npm start
 
 ```
 SkinCancerCheckMobile/
-├── assets/                 # Images, icons, and static assets
+├── src/                   # Main application source code
+│   ├── components/        # Reusable UI components
+│   │   └── TutorialModal.js
+│   ├── screens/          # Main application screens
+│   │   ├── LoginScreen.js
+│   │   ├── TutorialScreen.js
+│   │   ├── ScanScreen.js
+│   │   ├── ResultsScreen.js
+│   │   ├── HistoryScreen.js
+│   │   ├── ProgressScreen.js
+│   │   ├── EducationScreen.js
+│   │   ├── ScheduleScreen.js
+│   │   ├── AITipsScreen.js
+│   │   └── AlertScreen.js
+│   ├── services/         # Business logic and API services
+│   │   ├── ApiService.js      # ML API integration
+│   │   ├── AuthService.js     # Authentication logic
+│   │   ├── DatabaseService.js # Database operations
+│   │   └── PredictionService.js # Prediction handling
+│   └── utils/            # Utility functions
+│       └── PlatformUtils.js
+├── docs/                 # Documentation and guides
+│   ├── API_DOCUMENTATION.md
+│   ├── DEPLOYMENT_GUIDE.md
+│   ├── DEVELOPMENT_GUIDE.md
+│   ├── TODAYS_CHANGES_TODO.md
+│   ├── TODO.md
+│   ├── DEPLOYMENT_INSTRUCTIONS.md
+│   ├── IOS_SETUP.md
+│   └── ML_INTEGRATION.md
+├── scripts/              # Build and utility scripts
+│   └── fix_accuracy.sh
+├── tests/                # Test files and test data
+│   └── test_real_skin_images.py
+├── scoring-api/          # ML API service
+│   ├── app/
+│   │   ├── main.py
+│   │   └── models/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── assets/               # Images, icons, and static assets
 │   ├── icon.png
 │   ├── splash-icon.png
 │   ├── sample1.jpg
 │   └── Skin check ai logo.png
-├── components/             # Reusable UI components
-│   └── TutorialModal.js
-├── screens/               # Main application screens
-│   ├── LoginScreen.js
-│   ├── TutorialScreen.js
-│   ├── ScanScreen.js
-│   ├── ResultsScreen.js
-│   ├── HistoryScreen.js
-│   ├── ProgressScreen.js
-│   ├── EducationScreen.js
-│   ├── ScheduleScreen.js
-│   ├── AITipsScreen.js
-│   └── AlertScreen.js
-├── services/              # Business logic and API services
-│   ├── ApiService.js      # ML API integration
-│   ├── AuthService.js     # Authentication logic
-│   ├── DatabaseService.js # Database operations
-│   └── PredictionService.js # Prediction handling
-├── supabaseClient.js      # Supabase client configuration
-├── App.js                 # Main application component
-├── app.config.js          # Expo configuration
-├── package.json           # Dependencies and scripts
-└── README.md              # This documentation
+├── Demo/                 # Demo screenshots and examples
+├── dist/                 # Build outputs and compiled assets
+├── App.js                # Main application component
+├── index.js              # Application entry point
+├── app.config.js         # Expo configuration
+├── babel.config.js       # Babel configuration
+├── eas.json              # EAS build configuration
+├── supabaseClient.js     # Supabase client configuration
+├── initDb.js             # Database initialization
+├── docker-compose.yml    # ML API container setup
+├── Makefile              # Build automation
+├── package.json          # Dependencies and scripts
+└── README.md             # This documentation
 ```
 
 ## 🔧 Configuration
@@ -366,15 +396,38 @@ For technical support or questions:
 - Contact the development team
 - Check the troubleshooting section above
 
+## 🧹 Project Organization
+
+This project has been recently reorganized for better maintainability and professional presentation:
+
+### Clean Directory Structure
+- **Organized folders**: All documentation moved to `docs/`, scripts to `scripts/`, tests to `tests/`
+- **Reduced clutter**: Root directory cleaned from 30+ files to 12 essential files
+- **Clear separation**: Source code, documentation, scripts, and tests are properly separated
+- **Professional appearance**: Clean structure suitable for recruiters and collaborators
+
+### Removed Redundant Files
+- Old ML experiment folders (`ml/fabian/`, `ml/marten/`)
+- Standalone analysis scripts and outdated documentation
+- Duplicate configuration files and test images
+- Legacy SQL files and build artifacts
+
+### Maintained Functionality
+- All import paths preserved and working
+- App functionality 100% intact
+- No breaking changes to existing features
+- All essential files remain accessible
+
 ## 🔄 Version History
 
 - **v1.0.0**: Initial release with core functionality
 - **v1.1.0**: Added Schedule and AI Tips screens
 - **v1.2.0**: Updated prediction identifiers and improved UI
 - **v1.3.0**: Enhanced error handling and performance optimizations
+- **v1.4.0**: Project reorganization and cleanup for better maintainability
 
 ---
 
-**Last Updated**: December 2024
+**Last Updated**: January 2025
 **Maintainer**: Development Team
 **Repository**: https://github.com/FOKanu/SkinCancerCheckMobile

@@ -84,6 +84,6 @@ export default {
     policy: "sdkVersion"
   },
   updates: {
-    url: "https://u.expo.dev/your-project-id"
+    url: "https://u.expo.dev/5d8e3ea7-2138-427b-a593-4aa1ec068fca"
   }
 };
