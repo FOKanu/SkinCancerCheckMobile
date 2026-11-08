@@ -1,433 +1,178 @@
-# Skin Cancer Check Mobile App
+# Skin Cancer Check — Mobile App
 
-A comprehensive React Native mobile application that helps users monitor their skin health using AI-powered analysis. The app provides preliminary assessments of skin lesions and encourages regular professional check-ups.
+A React Native (Expo) prototype that lets a user photograph or upload a skin lesion, sends the image to a FastAPI/PyTorch scoring API, and stores the result — a binary **Low Risk / High Risk** score with a confidence value — in Supabase so it can be tracked over time.
 
-## 🏥 Important Medical Disclaimer
+> ⚠️ **Research prototype — not a medical device.** This app has not been clinically validated and must not be used for diagnosis. It was built to explore an end-to-end Medical × AI product flow (mobile capture → model inference → tracked results). Anyone with a skin concern should consult a qualified clinician.
 
-**This app is NOT a replacement for professional medical advice.** Always consult with a healthcare provider for proper diagnosis and treatment. If the app detects potential concerns with a confidence level above 55%, please consult a physician immediately.
+## What it does
 
-## 📱 Features
+- **Capture or upload** a lesion photo (Expo Camera / Image Picker)
+- **Score the image** via a remote inference API (`POST /predict`, 224×224 input, softmax over 2 classes)
+- **Show the result** with its confidence score and guidance to seek professional review
+- **Track history** — scans are linked to body "spots" so changes can be followed over time
+- **Learn** — education, skin-care tips, progress statistics, reminders and scheduling screens
 
-### Core Functionality
-- **AI-Powered Skin Analysis**: Upload or capture skin lesion images for preliminary assessment
-- **User Authentication**: Secure login system with Supabase backend
-- **Scan History Tracking**: Complete history of all skin scans with results
-- **Progress Monitoring**: Statistics and trends of your skin health journey
-- **Educational Content**: Skin care tips and educational resources
-- **Confidence Level Indicators**: Clear confidence scores for each prediction
-- **Professional Consultation Reminders**: Built-in reminders for medical check-ups
+## Screenshots
 
-### Additional Features
-- **Schedule Management**: Calendar view for appointment booking
-- **AI Tips Screen**: Personalized recommendations based on scan history
-- **Alert System**: Important notifications and health reminders
-- **Tutorial System**: Comprehensive onboarding for new users
-- **Multi-platform Support**: iOS, Android, and Web compatibility
+Real simulator/device screenshots still need to be captured — this is tracked in the roadmap below. (The images previously in `Demo/` were not screenshots of this app and have been removed from this README rather than presented as such.)
 
-## 🏗️ Architecture Overview
+## Architecture
 
-### Tech Stack
-- **Frontend**: React Native with Expo
-- **Backend**: Supabase (PostgreSQL + Authentication + Storage)
-- **AI/ML**: Remote API service (Google Cloud Run)
-- **Navigation**: React Navigation v6
-- **State Management**: React Hooks
-- **Image Processing**: Expo Image Picker
-- **Calendar**: react-native-calendars
-
-### System Architecture
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Mobile App    │    │   Supabase      │    │   ML API        │
-│   (React Native)│◄──►│   (Backend)     │    │   (Cloud Run)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Interface│    │   Database      │    │   ML Model      │
-│   - Screens     │    │   - Users       │    │   - Predictions │
-│   - Navigation  │    │   - Scans       │    │   - Confidence  │
-│   - Components  │    │   - History     │    │   - Probabilities│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+    A[Expo mobile app<br/>screens/ + services/] -->|Supabase Auth<br/>email + password| B[(Supabase<br/>PostgreSQL)]
+    A -->|scan metadata<br/>spots / scans / comments| B
+    A -->|lesion images| C[Supabase Storage<br/>lesion-images bucket]
+    A -->|image multipart upload| D[FastAPI scoring API<br/>scoring-api/]
+    D -->|predicted_class + confidence| A
+    D --> E[PyTorch classifier<br/>2-class, 224x224]
 ```
 
-## 🚀 Installation & Setup
+**How a scan flows**
+
+1. The user signs in with Supabase Auth (`services/AuthService.js`).
+2. A photo is taken or picked (`services/ImagePickerService.js`) and sent to the scoring API (`services/ApiService.js`, `services/PredictionService.js`).
+3. The API preprocesses the image (resize 224×224, ImageNet normalisation), runs the classifier, and returns `{ predicted_class, confidence, status }` where `0 = Low Risk`, `1 = High Risk`.
+4. The result is saved against a spot in Supabase (`spots`, `scans`) and shown on the Results, History and Progress screens.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Mobile app | React Native 0.79, Expo SDK 53, React Navigation 6, React 19 |
+| Backend / data | Supabase (PostgreSQL, Auth, Storage) with Row Level Security |
+| Inference API | FastAPI, PyTorch / torchvision, Docker (`scoring-api/`) |
+| Tooling | EAS build configuration, Python smoke-test scripts |
+
+## Features (as implemented in code)
+
+- Email/password sign-up and sign-in with Supabase Auth (`services/AuthService.js`); on sign-up a matching profile row is created in `public.users` (`id = auth.uid()`)
+- 12 screens: Login, Register, Tutorial, Home, Scan, Results, History, Progress, Education, Alert, AI Tips, Schedule (`App.js`, `screens/`)
+- Scan history and per-spot tracking with user-isolated queries (`services/PredictionService.js`)
+- Progress statistics, educational content, reminders and calendar screens
+- Optional demo mode with a mock user (off by default; demo writes are intentionally blocked by RLS — see Security)
+
+## Run it locally
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-- Expo CLI (`npm install -g @expo/cli`)
-- iOS Simulator (for Mac) or Android Emulator
-- Git
 
-### 1. Clone the Repository
+- Node.js 20+ and npm
+- Expo Go on a device, or an iOS/Android simulator
+- A Supabase project (free tier is fine)
+- Docker (for the scoring API), or Python 3.9+ to run it directly
+
+### 1. Mobile app
+
 ```bash
 git clone https://github.com/FOKanu/SkinCancerCheckMobile.git
 cd SkinCancerCheckMobile
-```
-
-### 2. Install Dependencies
-```bash
 npm install
+cp .env.example .env   # fill in SUPABASE_URL, SUPABASE_ANON_KEY, SCORING_API_URL
+npx expo start
 ```
 
-### 3. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SCORING_API_URL=your_scoring_api_url
-```
+Configuration is read from `.env` by `app.config.js` and exposed to the app via `expo-constants` (`supabaseClient.js`). Never commit a real `.env` file.
 
-### 4. Database Setup
-Initialize the database tables:
+### 2. Scoring API
+
+With Docker, from the repository root:
+
 ```bash
-node initDb.js
+docker compose up --build   # serves http://localhost:4000
 ```
 
-### 5. Start Development Server
+Or directly:
+
 ```bash
-npm start
+cd scoring-api
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 4000
 ```
 
-### 6. Run the App
-- **iOS Simulator**: Press `i` in the terminal
-- **Android Emulator**: Press `a` in the terminal
-- **Web Browser**: Press `w` in the terminal
-- **Physical Device**: Scan QR code with Expo Go app
+Test it:
 
-## 📁 Project Structure
+```bash
+curl http://localhost:4000/
+curl -X POST http://localhost:4000/predict -F "file=@path/to/lesion.jpg"
+# -> {"predicted_class": 0, "confidence": 0.92, "status": "success"}
+```
+
+### 3. Supabase setup
+
+Create the tables used by the app (`users`, `spots`, `scans`, `comments`; schema notes in `services/DatabaseService.js`) and **enable Row Level Security with owner-only policies** based on `auth.uid()`:
+
+- `users`: `id = auth.uid()`
+- `spots`: `user_id = auth.uid()`
+- `scans`: only where the linked spot belongs to `auth.uid()`
+- `comments`: `user_id = auth.uid()`
+
+No `anon` policies are required for the app's data tables.
+
+## Project structure
 
 ```
 SkinCancerCheckMobile/
-├── src/                   # Main application source code
-│   ├── components/        # Reusable UI components
-│   │   └── TutorialModal.js
-│   ├── screens/          # Main application screens
-│   │   ├── LoginScreen.js
-│   │   ├── TutorialScreen.js
-│   │   ├── ScanScreen.js
-│   │   ├── ResultsScreen.js
-│   │   ├── HistoryScreen.js
-│   │   ├── ProgressScreen.js
-│   │   ├── EducationScreen.js
-│   │   ├── ScheduleScreen.js
-│   │   ├── AITipsScreen.js
-│   │   └── AlertScreen.js
-│   ├── services/         # Business logic and API services
-│   │   ├── ApiService.js      # ML API integration
-│   │   ├── AuthService.js     # Authentication logic
-│   │   ├── DatabaseService.js # Database operations
-│   │   └── PredictionService.js # Prediction handling
-│   └── utils/            # Utility functions
-│       └── PlatformUtils.js
-├── docs/                 # Documentation and guides
-│   ├── API_DOCUMENTATION.md
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── DEVELOPMENT_GUIDE.md
-│   ├── TODAYS_CHANGES_TODO.md
-│   ├── TODO.md
-│   ├── DEPLOYMENT_INSTRUCTIONS.md
-│   ├── IOS_SETUP.md
-│   └── ML_INTEGRATION.md
-├── scripts/              # Build and utility scripts
-│   └── fix_accuracy.sh
-├── tests/                # Test files and test data
-│   └── test_real_skin_images.py
-├── scoring-api/          # ML API service
-│   ├── app/
-│   │   ├── main.py
-│   │   └── models/
-│   ├── Dockerfile
-│   └── requirements.txt
-├── assets/               # Images, icons, and static assets
-│   ├── icon.png
-│   ├── splash-icon.png
-│   ├── sample1.jpg
-│   └── Skin check ai logo.png
-├── Demo/                 # Demo screenshots and examples
-├── dist/                 # Build outputs and compiled assets
-├── App.js                # Main application component
-├── index.js              # Application entry point
-├── app.config.js         # Expo configuration
-├── babel.config.js       # Babel configuration
-├── eas.json              # EAS build configuration
-├── supabaseClient.js     # Supabase client configuration
-├── initDb.js             # Database initialization
-├── docker-compose.yml    # ML API container setup
-├── Makefile              # Build automation
-├── package.json          # Dependencies and scripts
-└── README.md             # This documentation
+├── App.js                  # Navigation (12 screens) and app entry wiring
+├── screens/                # Login, Register, Scan, Results, History, Progress, ...
+├── services/               # AuthService, ApiService, PredictionService,
+│                           # DatabaseService, ImagePickerService
+├── components/             # Shared UI components
+├── supabaseClient.js       # Supabase client (config from expo-constants)
+├── app.config.js           # Expo config; reads SUPABASE_* / SCORING_API_URL env vars
+├── scoring-api/            # FastAPI + PyTorch inference service (Docker)
+│   ├── app/main.py         # GET / and POST /predict
+│   └── app/models/         # Classifier definition and checkpoints
+├── tests/                  # Python scripts for testing with real skin images
+├── docs/                   # API, deployment and development guides
+└── .env.example            # Required environment variables (placeholders)
 ```
 
-## 🔧 Configuration
+## Security
 
-### Environment Variables
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_ANON_KEY`: Your Supabase anonymous key
-- `SCORING_API_URL`: URL for the ML prediction API
+- The Supabase **anon key is a publishable client key** — it is designed to ship in mobile apps. Data protection comes from **Row Level Security**: every table above is restricted to the owning `auth.uid()`, with no anonymous access. This was audited and enabled in 2026; see the Phase 0 log in the portfolio audit.
+- The **service_role key is never used in this codebase** and must never be committed or shipped in the app.
+- Real credentials live only in `.env` (git-ignored). An earlier hard-coded key was removed from the codebase in commit `7de046b`; because this repository is public, that publishable key is treated as known and is safe only because of the RLS policies above.
 
-### App Configuration (app.config.js)
-```javascript
-export default {
-  name: "SkinCancerCheckMobile",
-  slug: "SkinCancerCheckMobile",
-  version: "1.0.0",
-  orientation: "portrait",
-  // ... additional configuration
-}
-```
+## Model
 
-## 🧠 ML/AI Integration
+- Binary classifier (2 output classes) served with PyTorch; input is resized to 224×224 and normalised with ImageNet statistics (`scoring-api/app/main.py`).
+- The checkpoint was trained by a project teammate (**Fabian**) and integrated into the API and app by me. Model training is **not** claimed as my own work.
+- **No accuracy, sensitivity or specificity figures are published here**, because no reproducible evaluation on a held-out dataset exists in this repository. Publishing unverified medical metrics would be irresponsible.
+- Known model-code issue: `main.py` instantiates a MobileNetV3 classifier while loading a checkpoint file named `efficientnet_b3_model.pth`, and the two committed checkpoints are byte-identical duplicates. Checkpoint provenance/naming needs cleanup before the API is relied on (see roadmap).
 
-### Prediction System
-The app uses a remote ML API for skin lesion analysis:
+## Testing
 
-- **API Endpoint**: `https://model-inference-api-521423942017.europe-west1.run.app`
-- **Input**: Skin lesion images (224x224 pixels)
-- **Output**: Prediction class (0 = Low Risk, 1 = High Risk) + confidence score
-- **Response Format**:
-  ```json
-  {
-    "predicted_class": 0,
-    "confidence": 0.92,
-    "status": "success"
-  }
-  ```
+Current state, honestly: there is **no automated mobile test suite yet**. Testing so far:
 
-### Prediction Identifiers
-The app uses consistent terminology throughout:
-- **Low Risk**: Previously "benign" lesions
-- **High Risk**: Previously "malignant" lesions
-- **Confidence**: Probability score (0-1) indicating prediction certainty
+- `scoring-api/test_api.py` — smoke script for the API endpoints
+- `tests/test_real_skin_images.py` — prediction script against real skin images
+- Manual testing of the main flows (auth, scan, results, history)
 
-## 🗄️ Database Schema
+## Known limitations
 
-### Users Table
-```sql
-CREATE TABLE users (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  full_name TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  last_login TIMESTAMP WITH TIME ZONE
-);
-```
+- Not clinically validated; no dermatologist review, no evaluation on a recognised benchmark (e.g. ISIC) in this repo
+- Results are a single binary score — no lesion-type classification, no uncertainty explanation, no referral workflow beyond on-screen guidance
+- Demo mode uses a fake local user; its database writes are blocked by RLS by design
+- Some screens (AI Tips, Schedule) are functional UI but rely on limited/local data rather than a dedicated backend service
 
-### Scans Table
-```sql
-CREATE TABLE scans (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  spot_id UUID REFERENCES spots(id),
-  image_url TEXT NOT NULL,
-  prediction TEXT NOT NULL,
-  confidence FLOAT NOT NULL,
-  low_risk_probability FLOAT NOT NULL,
-  high_risk_probability FLOAT NOT NULL,
-  scanned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
+## Roadmap
 
-### Spots Table
-```sql
-CREATE TABLE spots (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  location TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
+- [ ] Capture real app screenshots and a short demo recording for this README
+- [ ] Resolve the checkpoint architecture/naming mismatch and document the trained model properly
+- [ ] Add a reproducible evaluation (held-out test set, confusion matrix) before quoting any metric
+- [ ] Add automated tests (Jest for services, API integration test in CI)
+- [ ] Fix remaining result-handling edge cases and add CI (lint + tests on push)
 
-## 🔐 Authentication
+## My role
 
-The app uses Supabase Authentication with:
-- Email/password authentication
-- Session management
-- User profile storage
-- Secure API access
+Lead developer for the mobile app and integrations (primary author of this repository): navigation and screens, Supabase Auth/database integration, scoring-API integration, environment/security hardening, and this documentation. This was a team project — see acknowledgements.
 
-## 📊 Key Features Deep Dive
+## Acknowledgements
 
-### 1. Scan Screen
-- Camera integration for photo capture
-- Image picker for gallery selection
-- Image preprocessing (224x224 resize)
-- Real-time analysis with ML API
+- **Fabian** — trained the skin-lesion classifier checkpoint used by the scoring API
+- **Marten Kose** — team contributions to the project
+- Built with Expo, Supabase, FastAPI and PyTorch
 
-### 2. Results Screen
-- Prediction display with confidence scores
-- Probability breakdown (Low Risk vs High Risk)
-- Save to new spot or link to existing spot
-- Professional consultation recommendations
+## Licence
 
-### 3. History Screen
-- Complete scan history with thumbnails
-- Filter and search capabilities
-- Detailed result viewing
-- Export functionality
-
-### 4. Progress Screen
-- Statistical overview of scan history
-- Risk level distribution charts
-- Confidence trend analysis
-- Monthly progress tracking
-
-## 🚨 Error Handling
-
-The app includes comprehensive error handling for:
-- Network connectivity issues
-- API failures
-- Authentication errors
-- Image processing errors
-- Database connection problems
-
-## 🔄 State Management
-
-Uses React Hooks for state management:
-- `useState` for local component state
-- `useEffect` for side effects and lifecycle management
-- Custom hooks for reusable logic
-- Context API for global state (if needed)
-
-## 📱 Platform Support
-
-- **iOS**: Native iOS app via Expo
-- **Android**: Native Android app via Expo
-- **Web**: Progressive Web App (PWA) support
-- **Development**: Hot reloading and debugging tools
-
-## 🧪 Testing
-
-### Manual Testing Checklist
-- [ ] User registration and login
-- [ ] Image capture and upload
-- [ ] ML prediction accuracy
-- [ ] History tracking
-- [ ] Progress statistics
-- [ ] Error handling
-- [ ] Cross-platform compatibility
-
-### Automated Testing (Future)
-- Unit tests for services
-- Integration tests for API calls
-- E2E tests for user flows
-- Performance testing
-
-## 🚀 Deployment
-
-### Development
-```bash
-npm start
-```
-
-### Production Build
-```bash
-expo build:android  # For Android
-expo build:ios      # For iOS
-```
-
-### App Store Deployment
-1. Configure app signing
-2. Build production version
-3. Submit to App Store/Play Store
-4. Configure CI/CD pipeline
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **Metro Bundler Issues**
-   ```bash
-   npx expo start --clear
-   ```
-
-2. **Dependency Conflicts**
-   ```bash
-   npm install --force
-   ```
-
-3. **Environment Variables**
-   - Ensure `.env` file exists
-   - Check variable names match `app.config.js`
-
-4. **Database Connection**
-   - Verify Supabase credentials
-   - Check network connectivity
-   - Run `node initDb.js` to reset tables
-
-### Performance Optimization
-- Image compression before upload
-- Lazy loading for history screens
-- Efficient database queries
-- Memory management for large image sets
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow React Native best practices
-- Use TypeScript for new features
-- Add comprehensive error handling
-- Include unit tests for new functionality
-- Update documentation for API changes
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Medical professionals for guidance and validation
-- Open source community for tools and libraries
-- AI/ML research community for model development
-- Supabase team for backend infrastructure
-- Expo team for development platform
-
-## 📞 Support
-
-For technical support or questions:
-- Create an issue on GitHub
-- Contact the development team
-- Check the troubleshooting section above
-
-## 🧹 Project Organization
-
-This project has been recently reorganized for better maintainability and professional presentation:
-
-### Clean Directory Structure
-- **Organized folders**: All documentation moved to `docs/`, scripts to `scripts/`, tests to `tests/`
-- **Reduced clutter**: Root directory cleaned from 30+ files to 12 essential files
-- **Clear separation**: Source code, documentation, scripts, and tests are properly separated
-- **Professional appearance**: Clean structure suitable for recruiters and collaborators
-
-### Removed Redundant Files
-- Old ML experiment folders (`ml/fabian/`, `ml/marten/`)
-- Standalone analysis scripts and outdated documentation
-- Duplicate configuration files and test images
-- Legacy SQL files and build artifacts
-
-### Maintained Functionality
-- All import paths preserved and working
-- App functionality 100% intact
-- No breaking changes to existing features
-- All essential files remain accessible
-
-## 🔄 Version History
-
-- **v1.0.0**: Initial release with core functionality
-- **v1.1.0**: Added Schedule and AI Tips screens
-- **v1.2.0**: Updated prediction identifiers and improved UI
-- **v1.3.0**: Enhanced error handling and performance optimizations
-- **v1.4.0**: Project reorganization and cleanup for better maintainability
-
----
-
-**Last Updated**: January 2025
-**Maintainer**: Development Team
-**Repository**: https://github.com/FOKanu/SkinCancerCheckMobile
+No open-source licence has been applied to this repository yet. All rights reserved until a licence is added.
